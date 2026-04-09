@@ -1177,14 +1177,30 @@ def calculer_gains_par_achat_attribution(conn: sqlite3.Connection) -> pd.DataFra
         
         df_result = pd.DataFrame(results)
         
-        total_revenus_calcule = df_result['revenus_ventes_mad'].sum()
-        total_ventes_attribuees = (ventes_attribuees['prix_mad'] * ventes_attribuees['quantite']).sum()
+        total_revenus_calcule = df_result['revenus_ventes_mad'].sum() if not df_result.empty else 0
+        total_ventes_attribuees = (ventes_attribuees['prix_mad'] * ventes_attribuees['quantite']).sum() if not ventes_attribuees.empty else 0
         
         st.write(f"💰 Total revenus calculé: {total_revenus_calcule:.2f} MAD")
         st.write(f"💰 Total ventes attribuées: {total_ventes_attribuees:.2f} MAD")
         
         if abs(total_revenus_calcule - total_ventes_attribuees) > 0.01:
-            st.warning(f"⚠️ Écart: {total_ventes_attribuees - total_revenus_calcule:.2f} MAD")
+            ecart = total_ventes_attribuees - total_revenus_calcule
+            st.warning(f"⚠️ Écart: {ecart:.2f} MAD")
+            
+            # Identifier les ventes orphelines (attribuées à un achat_source_id 
+            # dont le achat_header_id n'est pas dans les headers analysés)
+            ids_headers_analyses = set(achats_headers['id'].tolist())
+            ids_items_analyses = set(achats_items[achats_items['achat_header_id'].isin(ids_headers_analyses)]['id'].tolist())
+            
+            ventes_orphelines = ventes_attribuees[~ventes_attribuees['achat_source_id'].isin(ids_items_analyses)]
+            
+            if not ventes_orphelines.empty:
+                st.warning(f"🔍 {len(ventes_orphelines)} vente(s) orpheline(s) détectée(s) — attribuées à des achats introuvables:")
+                for _, v in ventes_orphelines.iterrows():
+                    montant_v = v['prix_mad'] * v['quantite']
+                    st.write(f"  • Vente ID {v.get('id', '?')}, produit: {v.get('produit', '?')}, "
+                             f"qté: {v.get('quantite', '?')}, montant: {montant_v:.2f} MAD, "
+                             f"achat_source_id: {v.get('achat_source_id', '?')}")
         
         st.success(f"✅ Calcul basé sur attributions réelles terminé: {len(df_result)} achats analysés")
         return df_result
