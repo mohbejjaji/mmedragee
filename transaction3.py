@@ -2121,6 +2121,36 @@ def initialize_session_state():
         st.session_state.filtre_prestation_client = ""
 
 # -------- APPLICATION STREAMLIT COMPLÈTE --------
+
+def check_password():
+    """Return `True` if the user had the correct password."""
+    def password_entered():
+        import streamlit as st
+        if st.session_state["password"] == st.secrets.get("APP_PASSWORD", "admin"):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # clean up session
+        else:
+            st.session_state["password_correct"] = False
+
+    if st.session_state.get("password_correct", False):
+        return True
+
+    st.markdown("<h2 style='text-align: center; margin-top: 15%;'>🔒 Accès Sécurisé</h2>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.info("Veuillez entrer le mot de passe de l'application.")
+        st.text_input(
+            "👉 Mot de passe", 
+            type="password", 
+            on_change=password_entered, 
+            key="password"
+        )
+        if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+            st.error("❌ Mot de passe incorrect")
+            
+    return False
+
+
 def main() -> None:
     st.set_page_config(
         page_title="Gestion Commerciale Pro", 
@@ -2129,6 +2159,9 @@ def main() -> None:
         initial_sidebar_state="expanded"
     )
     
+    if not check_password():
+        st.stop()
+        
     inject_custom_css()
     initialize_session_state()
     conn = get_conn()
