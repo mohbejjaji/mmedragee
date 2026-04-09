@@ -558,7 +558,7 @@ def generer_html_export(vente_info, articles, date_vente):
     import base64
     
     try:
-        with open("logo.JPG", "rb") as image_file:
+        with open("logo.jpg", "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode()
         
         logo_html = f"""
@@ -2173,7 +2173,7 @@ def main() -> None:
     # Sidebar avec style amélioré
     with st.sidebar:
         # Afficher le logo au lieu du texte
-        st.image("logo.JPG", width=200)  # Remplacez par le nom réel de votre logo
+        st.image("logo.jpg", width=200)  # Remplacez par le nom réel de votre logo
         st.markdown("---")
         
         menu = st.radio(
