@@ -1126,10 +1126,21 @@ def calculer_gains_par_achat_attribution(conn: sqlite3.Connection) -> pd.DataFra
         if achats_headers.empty:
             return pd.DataFrame()
         
+        # Normaliser les types pour éviter les mismatches int/float
+        if not achats_items.empty and 'id' in achats_items.columns:
+            achats_items['id'] = achats_items['id'].astype(int)
+        if not achats_items.empty and 'achat_header_id' in achats_items.columns:
+            achats_items['achat_header_id'] = achats_items['achat_header_id'].astype(int)
+        if not ventes_attribuees.empty and 'achat_source_id' in ventes_attribuees.columns:
+            ventes_attribuees['achat_source_id'] = ventes_attribuees['achat_source_id'].astype(int)
+        if not achats_headers.empty and 'id' in achats_headers.columns:
+            achats_headers['id'] = achats_headers['id'].astype(int)
+        
         results = []
+        total_revenus_debug = 0.0
         
         for _, achat in achats_headers.iterrows():
-            achat_id = achat['id']
+            achat_id = int(achat['id'])
             articles_achat = achats_items[achats_items['achat_header_id'] == achat_id]
             
             if articles_achat.empty:
@@ -1144,7 +1155,7 @@ def calculer_gains_par_achat_attribution(conn: sqlite3.Connection) -> pd.DataFra
             quantite_vendue_totale = 0
             
             for _, article in articles_achat.iterrows():
-                achat_item_id = article['id']
+                achat_item_id = int(article['id'])
                 produit = article['produit']
                 
                 ventes_attribuees_article = ventes_attribuees[ventes_attribuees['achat_source_id'] == achat_item_id]
@@ -1155,6 +1166,8 @@ def calculer_gains_par_achat_attribution(conn: sqlite3.Connection) -> pd.DataFra
                     
                     revenus += revenus_article
                     quantite_vendue_totale += quantite_article
+            
+            total_revenus_debug += revenus
             
             gain_net = revenus - cout_total
             marge = (gain_net / cout_total * 100) if cout_total > 0 else 0.0
