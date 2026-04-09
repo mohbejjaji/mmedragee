@@ -855,11 +855,17 @@ def get_stock_actuel(conn: sqlite3.Connection) -> pd.DataFrame:
             stock = stock.merge(prix_moyen, left_on="Produit", right_index=True, how="left")
             
             # Récupérer les frais de transport totaux
-            depenses_transport = pd.read_sql(
-                "SELECT SUM(montant_mad) as total_transport FROM depenses WHERE categorie LIKE '%transport%' OR description LIKE '%transport%'", 
-                conn
-            )
-            total_transport = depenses_transport.iloc[0]['total_transport'] if not depenses_transport.empty else 0
+            try:
+                depenses_transport = pd.read_sql(
+                    "SELECT SUM(montant_mad) as total_transport FROM depenses WHERE categorie LIKE '%transport%' OR description LIKE '%transport%'", 
+                    conn
+                )
+                if not depenses_transport.empty and depenses_transport.iloc[0]['total_transport'] is not None:
+                    total_transport = float(depenses_transport.iloc[0]['total_transport'])
+                else:
+                    total_transport = 0
+            except Exception:
+                total_transport = 0
             
             # Calcul du coût total des marchandises
             cout_total_marchandises = achats_items['quantite'].dot(achats_items['prix_mad'])
