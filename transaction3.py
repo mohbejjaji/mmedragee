@@ -2140,7 +2140,7 @@ def main() -> None:
     # Sidebar avec style amélioré
     with st.sidebar:
         # Afficher le logo au lieu du texte
-        st.image("logo.jpg", width=200)  # Remplacez par le nom réel de votre logo
+        st.image("logo.JPG", width=200)  # Remplacez par le nom réel de votre logo
         st.markdown("---")
         
         menu = st.radio(
