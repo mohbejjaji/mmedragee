@@ -19,163 +19,321 @@ SUPPORTED_DEVISES = ["MAD", "USD", "TRY"]
 TYPES_PRESTATION = ["Location de matériel", "Décoration", "Autre"]
 STATUTS_PRESTATION = ["Devis", "Confirmé", "En cours", "Terminé", "Facturé", "Payé", "Annulé"]
 
-# -------- STYLE CSS PROFESSIONNEL COMPLET --------
+# -------- STYLE CSS PROFESSIONNEL PREMIUM --------
 def inject_custom_css():
     st.markdown("""
     <style>
-    /* 1. POLICE ET FOND GLOBAL */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
     
+    /* 1. GLOBAL RESET & TYPOGRAPHY */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
-
-    .stApp {
-        background-color: #f8fafc;
+    
+    h1, h2, h3, .view-header h1 {
+        font-family: 'Outfit', sans-serif !important;
     }
 
-    /* 2. SIDEBAR MODERNE (BLEU NUIT) */
+    .stApp {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        background-attachment: fixed;
+    }
+
+    /* 2. SIDEBAR PREMIUM (GLASSMORPHISM EFFECT) */
     [data-testid="stSidebar"] {
         background-color: #0f172a !important;
+        background-image: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+        border-right: 1px solid rgba(255,255,255,0.05);
     }
 
     [data-testid="stSidebar"] * {
-        color: #f8fafc !important;
+        color: #e2e8f0 !important;
     }
 
-    [data-testid="stSidebar"] input, 
-    [data-testid="stSidebar"] select {
-        color: #0f172a !important;
-        background-color: #ffffff !important;
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        padding: 1rem;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
     }
 
-    /* 3. EN-TÊTE DE VUE COMPACT */
+    /* Active Menu Item Highlight */
+    [data-testid="stSidebar"] .st-emotion-cache-1pxm631 {
+        background-color: rgba(99, 102, 241, 0.1) !important;
+        border-radius: 8px;
+    }
+
+    /* 3. EN-TÊTE DE VUE (PREMIUM GRADIENT) */
     .view-header {
-        background: #ffffff;
-        padding: 1.2rem 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border-left: 5px solid #10b981;
+        background: white;
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .view-header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: linear-gradient(to bottom, #6366f1, #10b981);
     }
 
     .view-header h1 {
         color: #0f172a !important;
-        font-size: 1.5rem !important;
+        font-size: 2.2rem !important;
         font-weight: 700 !important;
         margin: 0 !important;
+        letter-spacing: -0.02em;
+    }
+    
+    .view-header .subtitle {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
+        font-weight: 400;
     }
 
-    /* 4. FIX POUR LES MÉTRIQUES (CARTES TROP GRANDES / TEXTE COUPÉ) */
+    /* 4. CARTES ET MÉTRIQUES (FINANCIAL DASHBOARD STYLE) */
     [data-testid="stMetric"] {
         background: white !important;
-        padding: 10px 15px !important;
-        border-radius: 10px !important;
+        padding: 1.5rem !important;
+        border-radius: 16px !important;
         border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-        min-width: 0px !important; /* Empêche le débordement */
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1) !important;
+        border-color: #6366f1 !important;
     }
 
-    /* Réduction de la taille du chiffre (Value) */
     [data-testid="stMetricValue"] {
-        font-size: 1.3rem !important; /* Plus petit pour tenir sur une ligne */
+        font-size: 1.8rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
-        white-space: nowrap !important; /* Force le texte sur une ligne */
+        font-family: 'Outfit', sans-serif !important;
     }
 
-    /* Réduction du label (Titre de la métrique) */
     [data-testid="stMetricLabel"] {
-        font-size: 0.8rem !important;
+        font-size: 0.85rem !important;
         color: #64748b !important;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
+        font-weight: 600 !important;
     }
 
-    /* 5. BOUTONS */
+    /* 5. BOUTONS (INTERACTIFS) */
     .stButton button {
-        border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
-        background-color: #10b981 !important;
+        border-radius: 12px !important;
+        padding: 0.6rem 1.5rem !important;
+        background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%) !important;
         color: white !important;
         font-weight: 600 !important;
         border: none !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2) !important;
     }
 
-    /* 6. TABLEAUX ET ONGLETS */
+    .stButton button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3) !important;
+        background: linear-gradient(90deg, #4f46e5 0%, #4338ca 100%) !important;
+    }
+    
+    /* Secondary Button Style */
+    .stButton button[kind="secondary"] {
+        background: white !important;
+        color: #0f172a !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+
+    /* 6. CONTAINERS ET CARTES CUSTOM */
+    .custom-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        font-family: 'Outfit', sans-serif;
+        color: #0f172a;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .subsection-header {
+        color: #334155;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* 7. NOTIFICATIONS / ALERTS (LOOK NOTION) */
+    .success-card, .warning-card, .info-card {
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        border: 1px solid transparent;
+    }
+
+    .success-card {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border-color: #a7f3d0;
+    }
+
+    .warning-card {
+        background-color: #fffbeb;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .info-card {
+        background-color: #eff6ff;
+        color: #1e40af;
+        border-color: #bfdbfe;
+    }
+
+    /* 8. TABLEAUX ET DATAFRAME */
     .stTabs [data-baseweb="tab"] {
-        padding: 8px 16px;
-        font-size: 0.9rem;
+        height: 50px;
+        background-color: transparent !important;
+        border-radius: 10px 10px 0 0;
+        font-weight: 600 !important;
+        color: #64748b !important;
     }
 
-    .stDataFrame {
-        border-radius: 8px;
+    .stTabs [aria-selected="true"] {
+        color: #6366f1 !important;
+        border-bottom: 3px solid #6366f1 !important;
     }
+
+    /* 9. FORM INPUTS */
+    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 0.5rem 1rem !important;
+    }
+    
+    .stTextInput input:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
 # -------- FONCTIONS UTILITAIRES D'AFFICHAGE --------
 def afficher_details_achat(achat_data):
-    """Affiche les détails d'un achat de manière formatée"""
+    """Affiche les détails d'un achat de manière formatée premium"""
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 1rem; border-radius: 5px; border-left: 4px solid #3498db;'>
-        <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;'>
-            <div><strong>Produit:</strong> {achat_data['produit']}</div>
-            <div><strong>Fournisseur:</strong> {achat_data['fournisseur']}</div>
-            <div><strong>Date:</strong> {achat_data['date_achat']}</div>
-            <div><strong>Stock:</strong> {achat_data['quantite_restante']} unités</div>
-            <div><strong>Prix achat:</strong> {achat_data['prix_achat_mad']:.2f} MAD</div>
-            <div><strong>ID:</strong> #{achat_data['achat_item_id']}</div>
+    <div style='background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;'>
+            <div>
+                <div style='color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;'>📦 Produit / Source</div>
+                <div style='color: #0f172a; font-weight: 600;'>{achat_data['produit']} (ID #{achat_data['achat_item_id']})</div>
+            </div>
+            <div>
+                <div style='color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;'>👤 Fournisseur</div>
+                <div style='color: #0f172a; font-weight: 600;'>{achat_data['fournisseur']}</div>
+            </div>
+            <div>
+                <div style='color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;'>📅 Date Achat</div>
+                <div style='color: #0f172a; font-weight: 600;'>{achat_data['date_achat']}</div>
+            </div>
+            <div>
+                <div style='color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;'>📉 Stock Restant</div>
+                <div style='color: #10b981; font-weight: 700; font-size: 1.1rem;'>{achat_data['quantite_restante']} unités</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 def display_metric_with_icon(icon, label, value, delta=None, delta_color="normal"):
-    """Affiche une métrique avec une icône"""
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        st.markdown(f"<div style='font-size: 1.5rem; text-align: center;'>{icon}</div>", unsafe_allow_html=True)
-    with col2:
-        st.metric(label, value, delta=delta, delta_color=delta_color)
+    """Affiche une métrique avec une icône stylisée"""
+    st.markdown(f"""
+    <div style='background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+        <div style='display: flex; align-items: center; gap: 15px;'>
+            <div style='background: #f1f5f9; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;'>
+                {icon}
+            </div>
+            <div>
+                <div style='color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;'>{label}</div>
+                <div style='color: #0f172a; font-size: 1.6rem; font-weight: 700; font-family: Outfit, sans-serif;'>{value}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def display_status_badge(status):
-    """Affiche un badge de statut coloré"""
-    status_class = f"status-{status.lower().replace(' ', '').replace('é', 'e')}"
-    st.markdown(f"<span class='status-badge {status_class}'>{status}</span>", unsafe_allow_html=True)
+    """Affiche un badge de statut coloré premium"""
+    # Map status to colors
+    colors = {
+        "paye": ("#ecfdf5", "#065f46", "#a7f3d0"),
+        "termine": ("#ecfdf5", "#065f46", "#a7f3d0"),
+        "encours": ("#eff6ff", "#1e40af", "#bfdbfe"),
+        "confirme": ("#f5f3ff", "#5b21b6", "#ddd6fe"),
+        "devis": ("#f1f5f9", "#334155", "#e2e8f0"),
+        "annule": ("#fef2f2", "#991b1b", "#fecaca"),
+        "facture": ("#fffbeb", "#92400e", "#fde68a"),
+    }
+    
+    key = status.lower().replace(' ', '').replace('é', 'e')
+    bg, fg, border = colors.get(key, ("#f1f5f9", "#334155", "#e2e8f0"))
+    
+    st.markdown(f"""
+    <span style='background-color: {bg}; color: {fg}; border: 1px solid {border}; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;'>
+        {status}
+    </span>
+    """, unsafe_allow_html=True)
 
 def display_success_message(message):
-    """Affiche un message de succès stylisé"""
-    st.markdown(f"<div class='success-card'>✅ {message}</div>", unsafe_allow_html=True)
+    """Affiche un message de succès stylisé premium"""
+    st.markdown(f"<div class='success-card'><span style='margin-right: 12px; font-size: 1.2rem;'>✅</span> {message}</div>", unsafe_allow_html=True)
 
 def display_warning_message(message):
-    """Affiche un message d'avertissement stylisé"""
-    st.markdown(f"<div class='warning-card'>⚠️ {message}</div>", unsafe_allow_html=True)
+    """Affiche un message d'avertissement stylisé premium"""
+    st.markdown(f"<div class='warning-card'><span style='margin-right: 12px; font-size: 1.2rem;'>⚠️</span> {message}</div>", unsafe_allow_html=True)
 
 def display_info_message(message):
-    """Affiche un message d'information stylisé"""
-    st.markdown(f"<div class='info-card'>ℹ️ {message}</div>", unsafe_allow_html=True)
+    """Affiche un message d'information stylisé premium"""
+    st.markdown(f"<div class='info-card'><span style='margin-right: 12px; font-size: 1.2rem;'>ℹ️</span> {message}</div>", unsafe_allow_html=True)
 
 def display_view_header(title, subtitle=None, icon="🏢"):
-    """Affiche un en-tête de vue stylisé avec la couleur de la sidebar"""
-    if subtitle:
-        st.markdown(f"""
-        <div class='view-header'>
-            <div style='text-align: center;'>
-                <div style='font-size: 2.5rem; margin-bottom: 0.5rem;'>{icon}</div>
+    """Affiche un en-tête de vue stylisé premium"""
+    st.markdown(f"""
+    <div class='view-header'>
+        <div style='display: flex; align-items: center; gap: 25px;'>
+            <div style='background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); width: 70px; height: 70px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);'>
+                {icon}
+            </div>
+            <div>
                 <h1>{title}</h1>
-                <div class='subtitle'>{subtitle}</div>
+                {f"<div class='subtitle'>{subtitle}</div>" if subtitle else ""}
             </div>
         </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class='view-header'>
-            <div style='text-align: center;'>
-                <div style='font-size: 2.5rem; margin-bottom: 0.5rem;'>{icon}</div>
-                <h1>{title}</h1>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
 # Ajoutez cette fonction avant la fonction generer_apercu_ticket_avance
 def generer_ticket_pdf(conn, vente_header_id):
