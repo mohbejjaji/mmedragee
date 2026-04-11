@@ -16,6 +16,20 @@ from supabase_adapter import SupabaseAdapter
 # -------- CONFIG --------
 DB_PATH = "gestion4.db"
 SUPPORTED_DEVISES = ["MAD", "USD", "TRY"]
+
+def parse_date_safe(date_val):
+    """
+    Convertit une date (string ou date object) en string formatée dd/mm/yyyy
+    """
+    if not date_val:
+        return ""
+    if isinstance(date_val, (date, datetime)):
+        return date_val.strftime('%d/%m/%Y')
+    try:
+        # Tenter le format standard ISO
+        return datetime.strptime(str(date_val), '%Y-%m-%d').strftime('%d/%m/%Y')
+    except Exception:
+        return str(date_val)
 TYPES_PRESTATION = ["Location de matériel", "Décoration", "Autre"]
 STATUTS_PRESTATION = ["Devis", "Confirmé", "En cours", "Terminé", "Facturé", "Payé", "Annulé"]
 
@@ -365,7 +379,7 @@ def generer_ticket_pdf(conn, vente_header_id):
         ORDER BY v.produit
     """, conn, params=(vente_header_id,))
     
-    date_vente = datetime.strptime(vente_info['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
+    date_vente = parse_date_safe(vente_info['date'])
     
     # Générer le HTML du ticket
     html_content = f"""
@@ -620,7 +634,7 @@ def generer_apercu_ticket_avance(conn, vente_header_id):
         inclure_tva = st.checkbox("Inclure TVA", key=f"tva_{vente_header_id}")
     
     # Afficher le ticket
-    date_vente = datetime.strptime(vente_info['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
+    date_vente = parse_date_safe(vente_info['date'])
     afficher_ticket(vente_info, articles_df, date_vente)
     
     # Boutons d'action
@@ -1240,19 +1254,23 @@ def create_tables(conn):
 
 def update_database_structure(conn):
     try:
-        # SupabaseAdapter/CursorWrapper doesn't support 'with' context manager
-        # Using a direct execute call which is more robust
-        conn.execute("ALTER TABLE ventes_headers ADD COLUMN IF NOT EXISTS ville TEXT;")
-        if hasattr(conn, 'commit'):
-            conn.commit()
-    except Exception as e:
-        # If IF NOT EXISTS is not supported, try without it but catch 'already exists' error
-        try:
+        # Vérification si la colonne existe déjà pour PostgreSQL
+        check_col_sql = """
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='ventes_headers' AND column_name='ville';
+        """
+        # Exécuter la vérification
+        res = pd.read_sql(check_col_sql, conn)
+        
+        if res.empty:
+            # La colonne n'existe pas, on l'ajoute
             conn.execute("ALTER TABLE ventes_headers ADD COLUMN ville TEXT;")
             if hasattr(conn, 'commit'):
                 conn.commit()
-        except Exception:
-            pass
+    except Exception as e:
+        # Fallback silencieux en cas d'erreur de schéma
+        pass
 
 def update_database_structure_v2(conn):
     pass
@@ -2427,7 +2445,7 @@ def main() -> None:
                         client = st.text_input("👤 Nom du client", placeholder="Nom complet du client")
                     with col2:
                         telephone = st.text_input("📞 Téléphone", placeholder="06XXXXXXXX")
-                        ville = st.text_input("🏙️ Ville", placeholder="Ex: Casablanca")
+                        ville = st.text_input("🏙️ Ville", placeholder="Ex: Casablanca", key="new_sale_ville")
                     
                     submitted_header = st.form_submit_button("📋 Créer la fiche de vente", use_container_width=True)
                 
@@ -2455,7 +2473,7 @@ def main() -> None:
                 with col3:
                     st.write(f"**Ville:** {vente_info.get('ville') or 'Non renseignée'}")
                 with col4:
-                    st.write(f"**Date:** {vente_info['date']}")
+                    st.write(f"**Date:** {parse_date_safe(vente_info['date'])}")
                 
                 # Bouton pour annuler et recommencer
                 if st.button("🔄 Nouvelle Vente", type="secondary", key="btn_nouvelle_vente"):
@@ -2502,6 +2520,10 @@ def main() -> None:
                             st.markdown("<div class='subsection-header'>📋 Liste des Ventes</div>", unsafe_allow_html=True)
                             
                             ventes_display = ventes_headers.copy()
+                            # Sécurité si la colonne ville est manquante
+                            if 'ville' not in ventes_display.columns:
+                                ventes_display['ville'] = "N/A"
+                                
                             ventes_display = ventes_display[['id', 'date', 'client', 'ville', 'telephone_client', 'nb_articles', 'total_mad']]
                             ventes_display.columns = ['ID', 'Date', 'Client', 'Ville', 'Téléphone', 'Nb Articles', 'Total MAD']
                             
@@ -2576,7 +2598,7 @@ def main() -> None:
                                 st.markdown(f"""
                                 <div class='info-card'>
                                     <strong>Vente #{vente_selectionnee_id}</strong><br>
-                                    <strong>Date :</strong> {vente_header['date']}<br>
+                                    <strong>Date :</strong> {parse_date_safe(vente_header['date'])}<br>
                                     <strong>Client :</strong> {vente_header['client']}<br>
                                     <strong>Ville :</strong> {vente_header.get('ville') or 'Non renseignée'}<br>
                                     <strong>Téléphone :</strong> {vente_header['telephone_client'] or 'Non renseigné'}<br>
@@ -3071,7 +3093,7 @@ def main() -> None:
                                     new_client = st.text_input("👤 Client", value=vente_data['client'])
                                 with col2:
                                     new_telephone = st.text_input("📞 Téléphone", value=vente_data['telephone_client'] or "")
-                                    new_ville = st.text_input("🏙️ Ville", value=vente_data.get('ville') or "")
+                                    new_ville = st.text_input("🏙️ Ville", value=vente_data.get('ville') or "", key=f"edit_ville_{vente_id}")
                                 
                                 if st.form_submit_button("💾 Mettre à jour l'en-tête"):
                                     modifier_vente_header(conn, selected_vente_id, new_date.isoformat(), new_client, new_telephone, new_ville)
