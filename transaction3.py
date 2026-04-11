@@ -700,7 +700,7 @@ def afficher_ticket(vente_info, articles, date_vente):
     ticket_modern = f"""
     <div style="background: white; padding: 30px; border-radius: 20px; border: 1px solid #e2e8f0; max-width: 450px; margin: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
         <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="margin: 0; color: #0f172a; font-size: 1.5rem;">MON BUFFET</h2>
+            <h2 style="margin: 0; color: #0f172a; font-size: 1.5rem;">Mme Dragée</h2>
             <p style="color: #64748b; font-size: 0.9rem;">Reçu de vente #{int(vente_info['id']):06d}</p>
         </div>
         
@@ -731,7 +731,7 @@ def afficher_ticket(vente_info, articles, date_vente):
     st.markdown(ticket_modern, unsafe_allow_html=True)
 
 def generer_html_export(vente_info, articles, date_vente):
-    """Génère le HTML pour l'export avec le logo MON BUFFET"""
+    """Génère le HTML pour l'export avec le logo Mme Dragée"""
     import base64
     
     try:
@@ -742,7 +742,7 @@ def generer_html_export(vente_info, articles, date_vente):
         <div style='text-align: center; margin-bottom: 20px;'>
             <img src='data:image/png;base64,{encoded_string}' 
                  style='max-width: 150px; max-height: 80px; object-fit: contain; margin-bottom: 5px;'>
-            <div style='font-weight: bold; font-size: 1.2em; color: #2c3e50;'>MON BUFFET</div>
+            <div style='font-weight: bold; font-size: 1.2em; color: #2c3e50;'>Mme Dragée</div>
         </div>
         """
     except FileNotFoundError:
@@ -750,7 +750,7 @@ def generer_html_export(vente_info, articles, date_vente):
         logo_html = """
         <div style='text-align: center; margin-bottom: 20px;'>
             <div style='font-size: 2em; margin-bottom: 5px;'>🍽️</div>
-            <strong style='font-size: 1.2em; color: #2c3e50;'>MON BUFFET</strong>
+            <strong style='font-size: 1.2em; color: #2c3e50;'>Mme Dragée</strong>
         </div>
         """
     
@@ -758,7 +758,7 @@ def generer_html_export(vente_info, articles, date_vente):
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Ticket MON BUFFET #{vente_info['id']}</title>
+    <title>Ticket Mme Dragée #{vente_info['id']}</title>
     <style>
         body {{ 
             font-family: 'Courier New', monospace; 
@@ -851,7 +851,7 @@ def generer_html_export(vente_info, articles, date_vente):
         <div class="footer">
             <p style="margin: 5px 0;"><strong>Articles: {int(vente_info['nb_articles'])} | Unités: {int(vente_info['total_quantite'])}</strong></p>
             <p style="margin: 5px 0;">Merci de votre visite !</p>
-            <p style="margin: 5px 0;">À très bientôt chez MON BUFFET</p>
+            <p style="margin: 5px 0;">À très bientôt chez Mme Dragée</p>
             <p style="margin: 5px 0;">{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
         </div>
     </div>
@@ -867,7 +867,7 @@ def generer_html_complet(vente_info, articles, date_vente):
     return f"""<!DOCTYPE html>
 <html>
 <head>
-    <title>Ticket MON BUFFET #{vente_info['id']}</title>
+    <title>Ticket Mme Dragée #{vente_info['id']}</title>
     <style>
         body {{ font-family: 'Courier New', monospace; margin: 0; padding: 20px; background: white; }}
         .no-print {{ text-align: center; margin-top: 20px; }}
