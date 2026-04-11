@@ -473,7 +473,7 @@ def generer_ticket_pdf(conn, vente_header_id):
             <div class="header">
                 <h2>🧾 TICKET DE CAISSE</h2>
                 <p>N° {vente_info['id']:06d} | {date_vente}</p>
-                <p><strong>{vente_info['client']}</strong></p>
+                <p><strong>{vente_info['client']}</strong> | {vente_info.get('ville') or ''}</p>
                 <p>{vente_info['telephone_client'] or ''}</p>
             </div>
             
@@ -689,6 +689,7 @@ def afficher_ticket(vente_info, articles, date_vente):
         <div style="background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569;">
                 <span>Client: <strong>{vente_info['client']}</strong></span>
+                <span>Ville: <strong>{vente_info.get('ville') or '—'}</strong></span>
                 <span>Date: {date_vente}</span>
             </div>
         </div>
@@ -793,7 +794,7 @@ def generer_html_export(vente_info, articles, date_vente):
         <div style="text-align: center; border-bottom: 2px dashed #2c3e50; padding-bottom: 15px; margin-bottom: 20px;">
             <h3 style="margin: 0 0 10px 0; color: #2c3e50;">TICKET DE CAISSE</h3>
             <p style="margin: 5px 0;"><strong>N° {int(vente_info['id']):06d}</strong> | {date_vente}</p>
-            <p style="margin: 5px 0;"><strong>{vente_info['client']}</strong></p>
+            <p style="margin: 5px 0;"><strong>{vente_info['client']}</strong> | {vente_info.get('ville') or ''}</p>
             <p style="margin: 5px 0; color: #7f8c8d;">{vente_info.get('telephone_client', '') or ''}</p>
         </div>
         
@@ -1234,7 +1235,20 @@ def create_tables(conn):
     pass
 
 def update_database_structure(conn):
-    pass
+    try:
+        # SupabaseAdapter/CursorWrapper doesn't support 'with' context manager
+        # Using a direct execute call which is more robust
+        conn.execute("ALTER TABLE ventes_headers ADD COLUMN IF NOT EXISTS ville TEXT;")
+        if hasattr(conn, 'commit'):
+            conn.commit()
+    except Exception as e:
+        # If IF NOT EXISTS is not supported, try without it but catch 'already exists' error
+        try:
+            conn.execute("ALTER TABLE ventes_headers ADD COLUMN ville TEXT;")
+            if hasattr(conn, 'commit'):
+                conn.commit()
+        except Exception:
+            pass
 
 def update_database_structure_v2(conn):
     pass
@@ -1494,12 +1508,12 @@ def supprimer_paiement(conn: sqlite3.Connection, paiement_id: int) -> None:
         )
 
 # -------- NOUVELLES FONCTIONS DE MODIFICATION --------
-def modifier_vente_header(conn: sqlite3.Connection, vente_id: int, date_op: str, client: str, telephone_client: str) -> None:
+def modifier_vente_header(conn: sqlite3.Connection, vente_id: int, date_op: str, client: str, telephone_client: str, ville: str = "") -> None:
     """Modifie l'en-tête d'une vente"""
     with conn:
         conn.execute(
-            "UPDATE ventes_headers SET date = ?, client = ?, telephone_client = ? WHERE id = ?",
-            (date_op, client, telephone_client, vente_id)
+            "UPDATE ventes_headers SET date = ?, client = ?, telephone_client = ?, ville = ? WHERE id = ?",
+            (date_op, client, telephone_client, ville, vente_id)
         )
 
 def modifier_vente_item(conn: sqlite3.Connection, vente_item_id: int, produit: str, quantite: int, prix_origine: float, devise: str, prix_mad: float) -> None:
@@ -1883,13 +1897,13 @@ def afficher_panier_actuel(conn, vente_header_id):
         st.rerun()
 
 # -------- FONCTIONS D'INSERTION --------
-def insert_vente_header(conn: sqlite3.Connection, date_op: str, client: str, telephone_client: str) -> int:
+def insert_vente_header(conn: sqlite3.Connection, date_op: str, client: str, telephone_client: str, ville: str = "") -> int:
     """Crée un en-tête de vente et retourne son ID"""
     with conn:
         cursor = conn.execute(
-            """INSERT INTO ventes_headers (date, client, telephone_client) 
-               VALUES (?, ?, ?)""",
-            (date_op, client, telephone_client)
+            """INSERT INTO ventes_headers (date, client, telephone_client, ville) 
+               VALUES (?, ?, ?, ?)""",
+            (date_op, client, telephone_client, ville)
         )
         return cursor.lastrowid
 
@@ -2409,6 +2423,7 @@ def main() -> None:
                         client = st.text_input("👤 Nom du client", placeholder="Nom complet du client")
                     with col2:
                         telephone = st.text_input("📞 Téléphone", placeholder="06XXXXXXXX")
+                        ville = st.text_input("🏙️ Ville", placeholder="Ex: Casablanca")
                     
                     submitted_header = st.form_submit_button("📋 Créer la fiche de vente", use_container_width=True)
                 
@@ -2416,7 +2431,7 @@ def main() -> None:
                     if not client.strip():
                         st.error("❌ Veuillez saisir le nom du client")
                     else:
-                        vente_id = insert_vente_header(conn, date_vente.isoformat(), client.strip(), telephone.strip())
+                        vente_id = insert_vente_header(conn, date_vente.isoformat(), client.strip(), telephone.strip(), ville.strip())
                         st.session_state.current_vente_id = vente_id
                         st.success(f"✅ Fiche de vente créée (ID: {vente_id}) - Vous pouvez maintenant ajouter des articles")
                         st.rerun()
@@ -2428,12 +2443,14 @@ def main() -> None:
                 ).iloc[0]
                 
                 st.markdown("<div class='section-header'>📋 Vente en Cours</div>", unsafe_allow_html=True)
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.write(f"**Client:** {vente_info['client']}")
                 with col2:
                     st.write(f"**Téléphone:** {vente_info['telephone_client'] or 'Non renseigné'}")
                 with col3:
+                    st.write(f"**Ville:** {vente_info.get('ville') or 'Non renseignée'}")
+                with col4:
                     st.write(f"**Date:** {vente_info['date']}")
                 
                 # Bouton pour annuler et recommencer
@@ -2481,8 +2498,8 @@ def main() -> None:
                             st.markdown("<div class='subsection-header'>📋 Liste des Ventes</div>", unsafe_allow_html=True)
                             
                             ventes_display = ventes_headers.copy()
-                            ventes_display = ventes_display[['id', 'date', 'client', 'telephone_client', 'nb_articles', 'total_mad']]
-                            ventes_display.columns = ['ID', 'Date', 'Client', 'Téléphone', 'Nb Articles', 'Total MAD']
+                            ventes_display = ventes_display[['id', 'date', 'client', 'ville', 'telephone_client', 'nb_articles', 'total_mad']]
+                            ventes_display.columns = ['ID', 'Date', 'Client', 'Ville', 'Téléphone', 'Nb Articles', 'Total MAD']
                             
                             st.dataframe(
                                 ventes_display,
@@ -2525,6 +2542,7 @@ def main() -> None:
                                 vh.id,
                                 vh.date,
                                 vh.client,
+                                vh.ville,
                                 vh.telephone_client,
                                 vh.total_mad,
                                 COUNT(v.id) as nb_articles,
@@ -2556,6 +2574,7 @@ def main() -> None:
                                     <strong>Vente #{vente_selectionnee_id}</strong><br>
                                     <strong>Date :</strong> {vente_header['date']}<br>
                                     <strong>Client :</strong> {vente_header['client']}<br>
+                                    <strong>Ville :</strong> {vente_header.get('ville') or 'Non renseignée'}<br>
                                     <strong>Téléphone :</strong> {vente_header['telephone_client'] or 'Non renseigné'}<br>
                                     <strong>Total :</strong> {vente_header['total_mad']:.2f} MAD<br>
                                     <strong>Articles :</strong> {vente_header['nb_articles']} ({vente_header['total_quantite']} unités)
@@ -3048,9 +3067,10 @@ def main() -> None:
                                     new_client = st.text_input("👤 Client", value=vente_data['client'])
                                 with col2:
                                     new_telephone = st.text_input("📞 Téléphone", value=vente_data['telephone_client'] or "")
+                                    new_ville = st.text_input("🏙️ Ville", value=vente_data.get('ville') or "")
                                 
                                 if st.form_submit_button("💾 Mettre à jour l'en-tête"):
-                                    modifier_vente_header(conn, selected_vente_id, new_date.isoformat(), new_client, new_telephone)
+                                    modifier_vente_header(conn, selected_vente_id, new_date.isoformat(), new_client, new_telephone, new_ville)
                                     display_success_message("En-tête de vente mis à jour")
                                     st.rerun()
                             
