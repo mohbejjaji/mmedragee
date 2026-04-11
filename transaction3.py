@@ -520,24 +520,28 @@ def generer_ticket_pdf(conn, vente_header_id):
 
 def generer_ticket_pdf_weasy(conn, vente_header_id):
     """
-    Génère un vrai PDF en utilisant WeasyPrint
+    Génère un vrai PDF en utilisant xhtml2pdf (alternative Windows-friendly)
     """
     try:
-        from weasyprint import HTML
+        from xhtml2pdf import pisa
         import io
         
         # Générer le HTML du ticket
-        html_content = generer_ticket_pdf(conn, vente_header_id)  # Utilise la fonction HTML ci-dessus
+        html_content = generer_ticket_pdf(conn, vente_header_id)  # Utilise la fonction HTML existante
         
         # Convertir en PDF
         pdf_buffer = io.BytesIO()
-        HTML(string=html_content).write_pdf(pdf_buffer)
-        pdf_buffer.seek(0)
+        pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
         
+        if pisa_status.err:
+            st.error(f"❌ Erreur xhtml2pdf : {pisa_status.err}")
+            return None
+            
+        pdf_buffer.seek(0)
         return pdf_buffer.getvalue()
         
     except ImportError:
-        st.error("❌ Module weasyprint non installé. Installation : pip install weasyprint")
+        st.error("❌ Module xhtml2pdf non installé. Installation : pip install xhtml2pdf")
         return None
     except Exception as e:
         st.error(f"❌ Erreur lors de la génération du PDF : {e}")
