@@ -5294,8 +5294,8 @@ def main() -> None:
                     if not stock_actuel.empty:
                         produit_max = stock_actuel.loc[stock_actuel['Quantité en stock'].idxmax()]
                         st.write(f"**📈 Plus stocké:** {produit_max['Produit']} ({produit_max['Quantité en stock']} unités)")
-                    
-                    st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.info("📦 Aucun stock disponible pour le moment")
                 # Afficher les colonnes disponibles pour debug
@@ -5441,7 +5441,7 @@ def main() -> None:
                         color_continuous_scale='Blues',
                         labels={'Chiffre d\'Affaires': 'CA (MAD)'}
                     )
-                    fig_ville_bar.update_layout(height=350, xaxis_title="CA (MAD)", yaxis_title="")
+                    fig_ville_bar.update_layout(height=500, xaxis_title="CA (MAD)", yaxis_title="")
                     st.plotly_chart(apply_custom_chart_style(fig_ville_bar), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 
@@ -5456,25 +5456,24 @@ def main() -> None:
                         color_discrete_sequence=px.colors.qualitative.Safe
                     )
                     fig_ville_pie.update_traces(textinfo='percent+label')
-                    fig_ville_pie.update_layout(height=350)
+                    fig_ville_pie.update_layout(height=500)
                     st.plotly_chart(apply_custom_chart_style(fig_ville_pie), use_container_width=True)
+                    
+                    # Métriques intégrées (comme dans l'analyse détaillée)
+                    m_col1, m_col2, m_col3 = st.columns(3)
+                    with m_col1:
+                        top_ville = ville_stats.iloc[0]['Ville']
+                        st.metric("🔝 Top Ville", top_ville)
+                    with m_col2:
+                        total_ca = ville_stats['Chiffre d\'Affaires'].sum()
+                        total_v = ville_stats['Nombre de Ventes'].sum()
+                        panier_moyen = total_ca / total_v if total_v > 0 else 0
+                        st.metric("🛒 Panier Moyen", f"{panier_moyen:.0f}")
+                    with m_col3:
+                        nb_villes = len(ville_stats[ville_stats['Ville'] != 'Non spécifiée'])
+                        st.metric("📍 Villes", nb_villes)
+                    
                     st.markdown("</div>", unsafe_allow_html=True)
-                
-                # Métriques par ville
-                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                m_col1, m_col2, m_col3 = st.columns(3)
-                with m_col1:
-                    top_ville = ville_stats.iloc[0]['Ville']
-                    st.metric("🔝 Ville la plus rentable", top_ville)
-                with m_col2:
-                    total_ca = ville_stats['Chiffre d\'Affaires'].sum()
-                    total_v = ville_stats['Nombre de Ventes'].sum()
-                    panier_moyen = total_ca / total_v if total_v > 0 else 0
-                    st.metric("🛒 Panier Moyen Global", f"{panier_moyen:,.2f} MAD")
-                with m_col3:
-                    nb_villes = len(ville_stats[ville_stats['Ville'] != 'Non spécifiée'])
-                    st.metric("📍 Villes Actives", nb_villes)
-                st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.info("🏙️ Aucune donnée géographique disponible pour le moment")
 
