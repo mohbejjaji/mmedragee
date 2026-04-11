@@ -4359,7 +4359,7 @@ def main() -> None:
                     produits_display = produits_display[[
                         'produit', 'nb_factures', 'quantite_totale_achetee', 
                         'cout_total_mad', 'prix_achat_moyen', 
-                        'premier_achat', 'derniere_achat'
+                        'premier_achat', 'dernier_achat'
                     ]]
                     
                     # Formater les colonnes
@@ -4377,7 +4377,7 @@ def main() -> None:
                             "cout_total_mad": st.column_config.NumberColumn("Coût Total", format="%.2f MAD"),
                             "prix_achat_moyen": st.column_config.NumberColumn("Prix Moyen", format="%.2f MAD"),
                             "premier_achat": "Premier achat",
-                            "derniere_achat": "Dernier achat"
+                            "dernier_achat": "Dernier achat"
                         }
                     )
                 else:
