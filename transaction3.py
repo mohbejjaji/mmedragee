@@ -2355,11 +2355,13 @@ def check_password():
     """Return `True` if the user had the correct password."""
     def password_entered():
         import streamlit as st
-        pwd = st.session_state.get("password", "")
+        # Utiliser .strip() pour ignorer les espaces accidentels
+        pwd = st.session_state.get("password", "").strip()
         if pwd == st.secrets.get("APP_PASSWORD", "admin"):
             st.session_state["password_correct"] = True
             if "password" in st.session_state:
                 del st.session_state["password"]  # clean up session
+            st.rerun()
         else:
             st.session_state["password_correct"] = False
 
