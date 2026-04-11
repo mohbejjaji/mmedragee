@@ -130,19 +130,19 @@ def inject_custom_css():
     }
 
     [data-testid="stMetricValue"] {
-        font-size: 1.6rem !important;
+        font-size: 1.35rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
         font-family: 'Outfit', sans-serif !important;
     }
 
     [data-testid="stMetricLabel"] {
-        font-size: 0.8rem !important;
+        font-size: 0.75rem !important;
         color: #64748b !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 600 !important;
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0.25rem !important;
     }
 
     /* 5. BOUTONS (INTERACTIFS) */
@@ -176,38 +176,38 @@ def inject_custom_css():
     /* 6. CONTAINERS ET CARTES CUSTOM */
     .custom-card {
         background: white;
-        padding: 1.75rem;
-        border-radius: 20px;
+        padding: 1.25rem;
+        border-radius: 16px;
         border: 1px solid rgba(226, 232, 240, 0.6);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
-        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        margin-bottom: 1.25rem;
         transition: all 0.3s ease;
     }
     
     .custom-card:hover {
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
+        box-shadow: 0 8px 12px -3px rgba(0,0,0,0.06);
         border-color: rgba(99, 102, 241, 0.3);
     }
 
     .section-header {
         font-family: 'Outfit', sans-serif;
         color: #0f172a;
-        font-size: 1.5rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        margin-bottom: 1.5rem;
-        margin-top: 1rem;
-        padding-bottom: 0.75rem;
+        margin-bottom: 1.25rem;
+        margin-top: 0.75rem;
+        padding-bottom: 0.5rem;
         border-bottom: 2px solid #f1f5f9;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
     }
 
     .subsection-header {
         color: #334155;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -2406,7 +2406,7 @@ def apply_custom_chart_style(fig):
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family="Inter, sans-serif", size=12, color="#64748b"),
-        margin=dict(l=20, r=20, t=60, b=20),
+        margin=dict(l=10, r=10, t=50, b=10),
         hovermode="x unified",
         separators=", ",
         showlegend=True
@@ -5255,13 +5255,10 @@ def main() -> None:
             st.markdown("<div class='section-header'>📦 Stock Actuel - Détail avec Prix de Vente</div>", unsafe_allow_html=True)
 
             if not stock_actuel.empty and 'Valeur MAD' in stock_actuel.columns:
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='subsection-header'>📦 État Global du Stock</div>", unsafe_allow_html=True)
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown("""
-                    <div class='custom-card'>
-                        <div class='subsection-header'>📋 Liste des Produits en Stock avec Prix de Vente</div>
-                    """, unsafe_allow_html=True)
-                    
                     st.dataframe(
                         stock_actuel,
                         use_container_width=True,
@@ -5276,14 +5273,8 @@ def main() -> None:
                             "Valeur Vente MAD": st.column_config.NumberColumn("Valeur Vente", format="%.2f MAD")
                         }
                     )
-                    st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col2:
-                    st.markdown("""
-                    <div class='custom-card'>
-                        <div class='subsection-header'>📊 Résumé Stock & Marges</div>
-                    """, unsafe_allow_html=True)
-                    
                     total_articles = stock_actuel['Quantité en stock'].sum()
                     total_valeur_achat = stock_actuel['Valeur MAD'].sum()
                     total_valeur_vente = stock_actuel['Valeur Vente MAD'].sum()
@@ -5316,12 +5307,11 @@ def main() -> None:
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("""
-                <div class='custom-card'>
-                    <div class='subsection-header'>📈 Répartition du CA</div>
-                """, unsafe_allow_html=True)
-                
                 if ca_total > 0:
+                    st.markdown("""
+                    <div class='custom-card'>
+                        <div class='subsection-header'>📈 Répartition du CA</div>
+                    """, unsafe_allow_html=True)
                     fig_ca = px.pie(
                         values=[ca_ventes, ca_prestations],
                         names=['Ventes', 'Prestations'],
@@ -5329,12 +5319,11 @@ def main() -> None:
                         hole=0.6
                     )
                     fig_ca.update_traces(textposition='outside', textinfo='percent+label')
-                    fig_ca.update_layout(height=350)
+                    fig_ca.update_layout(height=300)
                     st.plotly_chart(apply_custom_chart_style(fig_ca), use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     st.info("Aucune donnée de CA disponible")
-                
-                st.markdown("</div>", unsafe_allow_html=True)
             
             with col2:
                 st.markdown("""
@@ -5392,7 +5381,7 @@ def main() -> None:
                                     marker=dict(size=6, color='#2980b9')
                                 )
                                 
-                                fig_ventes.update_layout(height=400)
+                                fig_ventes.update_layout(height=350)
                                 st.plotly_chart(apply_custom_chart_style(fig_ventes), use_container_width=True)
                                 
                                 if len(ventes_agg) > 1:
@@ -5452,7 +5441,7 @@ def main() -> None:
                         color_continuous_scale='Blues',
                         labels={'Chiffre d\'Affaires': 'CA (MAD)'}
                     )
-                    fig_ville_bar.update_layout(height=450, xaxis_title="CA (MAD)", yaxis_title="")
+                    fig_ville_bar.update_layout(height=350, xaxis_title="CA (MAD)", yaxis_title="")
                     st.plotly_chart(apply_custom_chart_style(fig_ville_bar), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 
@@ -5467,7 +5456,7 @@ def main() -> None:
                         color_discrete_sequence=px.colors.qualitative.Safe
                     )
                     fig_ville_pie.update_traces(textinfo='percent+label')
-                    fig_ville_pie.update_layout(height=450)
+                    fig_ville_pie.update_layout(height=350)
                     st.plotly_chart(apply_custom_chart_style(fig_ville_pie), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 
