@@ -5263,7 +5263,7 @@ def main() -> None:
                         stock_actuel,
                         use_container_width=True,
                         hide_index=True,
-                        height=600, # Augmenté pour l'alignement
+                        height=780, # Ajusté pour l'alignement avec la 6ème carte (Marge Unitaire Moyenne)
                         column_config={
                             "Produit": "Produit",
                             "Quantité en stock": st.column_config.NumberColumn("Quantité", format="%d"),
