@@ -40,9 +40,21 @@ class CursorWrapper:
 class SupabaseAdapter:
     def __init__(self):
         import streamlit as st
-        self.dsn = st.secrets["DB_URL"]
-        self.pg_conn = psycopg2.connect(self.dsn, cursor_factory=DictCursor)
-        self.engine = create_engine(self.dsn)
+        # Utiliser .get pour éviter un crash immédiat si le secret est manquant
+        self.dsn = st.secrets.get("DB_URL")
+        
+        if not self.dsn:
+            st.error("❌ Erreur de configuration : Le secret `DB_URL` est manquant.")
+            st.info("💡 Solution : Ajoutez `DB_URL` dans les secrets de votre application Streamlit Cloud.")
+            st.stop()
+            
+        try:
+            self.pg_conn = psycopg2.connect(self.dsn, cursor_factory=DictCursor)
+            self.engine = create_engine(self.dsn)
+        except Exception as e:
+            st.error(f"❌ Erreur de connexion à la base de données : {e}")
+            st.stop()
+            
         self.row_factory = None
 
     def cursor(self):
