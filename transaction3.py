@@ -1187,6 +1187,28 @@ def get_produits_vendus(conn: sqlite3.Connection) -> pd.DataFrame:
     
     return pd.read_sql(query, conn)
 
+def get_produits_achetes(conn: sqlite3.Connection) -> pd.DataFrame:
+    """
+    Récupère la liste des produits qui ont été achetés avec des statistiques
+    """
+    query = """
+    SELECT 
+        a.produit,
+        COUNT(DISTINCT a.achat_header_id) as nb_factures,
+        COUNT(a.id) as nb_lignes_achat,
+        SUM(a.quantite) as quantite_totale_achetee,
+        SUM(a.quantite * a.prix_mad) as cout_total_mad,
+        AVG(a.prix_mad) as prix_achat_moyen,
+        MIN(ah.date) as premier_achat,
+        MAX(ah.date) as dernier_achat
+    FROM achats a
+    JOIN achats_headers ah ON a.achat_header_id = ah.id
+    GROUP BY a.produit
+    ORDER BY cout_total_mad DESC
+    """
+    
+    return pd.read_sql(query, conn)
+
 def gerer_quantites_multi_sources(conn, vente_header_id, produit, quantite_totale):
     """Gère l'attribution d'une quantité totale sur plusieurs achats sources"""
     st.markdown(f"**🔀 Répartition de {quantite_totale} '{produit}' sur plusieurs achats**")
@@ -3631,7 +3653,7 @@ def main() -> None:
     elif menu == "🛒 Achats":
         display_view_header("Gestion des Achats", "Suivez vos achats et votre stock", "🛒")
         
-        tab_achats1, tab_achats2, tab_achats3 = st.tabs(["➕ Nouvel Achat", "🗂️ Historique & Gestion", "✏️ Modifier Achat"])
+        tab_achats1, tab_achats2, tab_achats3, tab_achats4 = st.tabs(["➕ Nouvel Achat", "🗂️ Historique & Gestion", "✏️ Modifier Achat", "📈 Analyse Produits"])
         
         with tab_achats1:
             with st.container():
@@ -4256,6 +4278,111 @@ def main() -> None:
                         
                 except Exception as e:
                     st.error(f"❌ Erreur lors de la modification: {e}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        with tab_achats4:
+            with st.container():
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='section-header'>📈 Analyse des Achats par Produit</div>", unsafe_allow_html=True)
+                
+                produits_stats = get_produits_achetes(conn)
+                
+                if not produits_stats.empty:
+                    # Métriques Clés
+                    st.markdown("#### 📊 Indicateurs Clés")
+                    cols = st.columns(3)
+                    
+                    top_cout = produits_stats.nlargest(3, 'cout_total_mad')
+                    for i, (idx, row) in enumerate(top_cout.iterrows()):
+                        if i < 3:
+                            with cols[i]:
+                                st.metric(f"🏆 Top {i+1} : {row['produit']}", f"{row['cout_total_mad']:,.2f} MAD")
+                    
+                    st.markdown("---")
+                    
+                    # Graphiques
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Top produits par Coût
+                        top_10_cout = produits_stats.nlargest(10, 'cout_total_mad')
+                        fig_cout = px.bar(
+                            top_10_cout,
+                            x='produit',
+                            y='cout_total_mad',
+                            title="Top 10 produits par coût total d'achat",
+                            labels={'produit': 'Produit', 'cout_total_mad': 'Coût Total (MAD)'},
+                            color='cout_total_mad',
+                            color_continuous_scale='Viridis'
+                        )
+                        fig_cout.update_layout(height=350, xaxis_tickangle=-45)
+                        st.plotly_chart(fig_cout, use_container_width=True)
+                    
+                    with col2:
+                        # Top produits par Quantité
+                        top_10_qte = produits_stats.nlargest(10, 'quantite_totale_achetee')
+                        fig_qte = px.bar(
+                            top_10_qte,
+                            x='produit',
+                            y='quantite_totale_achetee',
+                            title="Top 10 produits par quantité achetée",
+                            labels={'produit': 'Produit', 'quantite_totale_achetee': 'Quantité Totale'},
+                            color='quantite_totale_achetee',
+                            color_continuous_scale='Magma'
+                        )
+                        fig_qte.update_layout(height=350, xaxis_tickangle=-45)
+                        st.plotly_chart(fig_qte, use_container_width=True)
+                    
+                    # Matrice Coût/Quantité
+                    fig_scatter = px.scatter(
+                        produits_stats,
+                        x='quantite_totale_achetee',
+                        y='cout_total_mad',
+                        size='nb_factures',
+                        hover_name='produit',
+                        text='produit',
+                        title="Matrice Achats : Quantité vs Coût Total",
+                        labels={
+                            'quantite_totale_achetee': 'Quantité totale achetée',
+                            'cout_total_mad': "Coût total (MAD)",
+                            'nb_factures': 'Nombre de factures'
+                        }
+                    )
+                    fig_scatter.update_traces(textposition='top center')
+                    fig_scatter.update_layout(height=400)
+                    st.plotly_chart(fig_scatter, use_container_width=True)
+                    
+                    # Tableau détaillé
+                    st.markdown("<div class='subsection-header'>📋 Détail des Achats par Produit</div>", unsafe_allow_html=True)
+                    
+                    produits_display = produits_stats.copy()
+                    produits_display = produits_display[[
+                        'produit', 'nb_factures', 'quantite_totale_achetee', 
+                        'cout_total_mad', 'prix_achat_moyen', 
+                        'premier_achat', 'derniere_achat'
+                    ]]
+                    
+                    # Formater les colonnes
+                    produits_display['cout_total_mad'] = produits_display['cout_total_mad'].round(2)
+                    produits_display['prix_achat_moyen'] = produits_display['prix_achat_moyen'].round(2)
+                    
+                    st.dataframe(
+                        produits_display,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "produit": "Produit",
+                            "nb_factures": st.column_config.NumberColumn("Factures", format="%d"),
+                            "quantite_totale_achetee": st.column_config.NumberColumn("Qté Totale", format="%d"),
+                            "cout_total_mad": st.column_config.NumberColumn("Coût Total", format="%.2f MAD"),
+                            "prix_achat_moyen": st.column_config.NumberColumn("Prix Moyen", format="%.2f MAD"),
+                            "premier_achat": "Premier achat",
+                            "derniere_achat": "Dernier achat"
+                        }
+                    )
+                else:
+                    st.info("📊 Aucune donnée d'achat disponible pour l'analyse")
+                
                 st.markdown("</div>", unsafe_allow_html=True)
 
     elif menu == "💰 Dépenses":
