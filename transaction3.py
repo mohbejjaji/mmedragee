@@ -5397,6 +5397,75 @@ def main() -> None:
                 
                 st.markdown("</div>", unsafe_allow_html=True)
 
+            st.markdown("<div class='section-header'>🏙️ Analyse Géo-Commerciale (Par Ville)</div>", unsafe_allow_html=True)
+            
+            if not ventes_headers.empty:
+                # Préparation des données
+                ventes_ville = ventes_headers.copy()
+                # Assurer que la colonne ville existe et gérer les valeurs vides
+                if 'ville' not in ventes_ville.columns:
+                    ventes_ville['ville'] = 'Non spécifiée'
+                else:
+                    ventes_ville['ville'] = ventes_ville['ville'].fillna('Non spécifiée').replace('', 'Non spécifiée')
+                
+                ville_stats = ventes_ville.groupby('ville').agg({
+                    'total_mad': 'sum',
+                    'id': 'count'
+                }).reset_index()
+                ville_stats.columns = ['Ville', 'Chiffre d\'Affaires', 'Nombre de Ventes']
+                ville_stats = ville_stats.sort_values('Chiffre d\'Affaires', ascending=False)
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                    st.markdown("<div class='subsection-header'>💰 Chiffre d'Affaires par Ville</div>", unsafe_allow_html=True)
+                    fig_ville_bar = px.bar(
+                        ville_stats,
+                        x='Chiffre d\'Affaires',
+                        y='Ville',
+                        orientation='h',
+                        color='Chiffre d\'Affaires',
+                        color_continuous_scale='Blues',
+                        labels={'Chiffre d\'Affaires': 'CA (MAD)'}
+                    )
+                    fig_ville_bar.update_layout(height=400, margin=dict(l=20, r=20, t=30, b=20), xaxis_title="CA (MAD)", yaxis_title="")
+                    st.plotly_chart(fig_ville_bar, use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                    st.markdown("<div class='subsection-header'>📈 Répartition du Volume de Ventes</div>", unsafe_allow_html=True)
+                    fig_ville_pie = px.pie(
+                        ville_stats,
+                        values='Nombre de Ventes',
+                        names='Ville',
+                        hole=0.4,
+                        color_discrete_sequence=px.colors.qualitative.Pastel
+                    )
+                    fig_ville_pie.update_traces(textinfo='percent+label')
+                    fig_ville_pie.update_layout(height=400, margin=dict(l=20, r=20, t=30, b=20))
+                    st.plotly_chart(fig_ville_pie, use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                
+                # Métriques par ville
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                m_col1, m_col2, m_col3 = st.columns(3)
+                with m_col1:
+                    top_ville = ville_stats.iloc[0]['Ville']
+                    st.metric("🔝 Ville la plus rentable", top_ville)
+                with m_col2:
+                    total_ca = ville_stats['Chiffre d\'Affaires'].sum()
+                    total_v = ville_stats['Nombre de Ventes'].sum()
+                    panier_moyen = total_ca / total_v if total_v > 0 else 0
+                    st.metric("🛒 Panier Moyen Global", f"{panier_moyen:,.2f} MAD")
+                with m_col3:
+                    nb_villes = len(ville_stats[ville_stats['Ville'] != 'Non spécifiée'])
+                    st.metric("📍 Villes Actives", nb_villes)
+                st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.info("🏙️ Aucune donnée géographique disponible pour le moment")
+
             st.markdown("<div class='section-header'>💵 Détail de la Trésorerie</div>", unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
