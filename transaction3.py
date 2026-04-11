@@ -120,6 +120,7 @@ def inject_custom_css():
         border: 1px solid #e2e8f0 !important;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
         transition: all 0.3s ease !important;
+        min-height: 120px;
     }
     
     [data-testid="stMetric"]:hover {
@@ -129,18 +130,19 @@ def inject_custom_css():
     }
 
     [data-testid="stMetricValue"] {
-        font-size: 1.8rem !important;
+        font-size: 1.6rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
         font-family: 'Outfit', sans-serif !important;
     }
 
     [data-testid="stMetricLabel"] {
-        font-size: 0.85rem !important;
+        font-size: 0.8rem !important;
         color: #64748b !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 600 !important;
+        margin-bottom: 0.5rem !important;
     }
 
     /* 5. BOUTONS (INTERACTIFS) */
@@ -156,9 +158,11 @@ def inject_custom_css():
     }
 
     .stButton button:hover {
-        transform: scale(1.02);
+        transform: scale(1.02) !important;
         box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3) !important;
         background: linear-gradient(90deg, #4f46e5 0%, #4338ca 100%) !important;
+        border: none !important;
+        color: white !important;
     }
     
     /* Secondary Button Style */
@@ -172,32 +176,41 @@ def inject_custom_css():
     /* 6. CONTAINERS ET CARTES CUSTOM */
     .custom-card {
         background: white;
-        padding: 2rem;
+        padding: 1.75rem;
         border-radius: 20px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
         margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
+        border-color: rgba(99, 102, 241, 0.3);
     }
 
     .section-header {
         font-family: 'Outfit', sans-serif;
         color: #0f172a;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 1.5rem;
+        margin-top: 1rem;
         padding-bottom: 0.75rem;
         border-bottom: 2px solid #f1f5f9;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
 
     .subsection-header {
         color: #334155;
         font-size: 1.1rem;
         font-weight: 600;
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     /* 7. NOTIFICATIONS / ALERTS (LOOK NOTION) */
@@ -208,6 +221,7 @@ def inject_custom_css():
         display: flex;
         align-items: center;
         border: 1px solid transparent;
+        font-weight: 500;
     }
 
     .success-card {
@@ -2383,6 +2397,36 @@ def check_password():
             
     return False
 
+
+def apply_custom_chart_style(fig):
+    """
+    Uniformise le design des graphiques Plotly
+    """
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family="Inter, sans-serif", size=12, color="#64748b"),
+        margin=dict(l=20, r=20, t=60, b=20),
+        hovermode="x unified",
+        separators=", ",
+        showlegend=True
+    )
+    if hasattr(fig, 'update_xaxes'):
+        fig.update_xaxes(
+            showgrid=True, 
+            gridcolor='rgba(226, 232, 240, 0.4)', 
+            linecolor='rgba(226, 232, 240, 0.8)',
+            zeroline=False
+        )
+    if hasattr(fig, 'update_yaxes'):
+        fig.update_yaxes(
+            showgrid=True, 
+            gridcolor='rgba(226, 232, 240, 0.4)', 
+            linecolor='rgba(226, 232, 240, 0.8)',
+            zeroline=False,
+            tickformat=',.0f'
+        )
+    return fig
 
 def main() -> None:
     st.set_page_config(
@@ -5043,63 +5087,58 @@ def main() -> None:
             tresorerie_disponible = ca_total - cout_achats_ventes - depenses_argent_disponible
             benefice = ca_total - cout_achats_ventes - total_depenses - cout_stock_initial
 
-            st.markdown("<div class='section-header'>📈 Indicateurs Financiers</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-header'>💹 Synthèse de Performance</div>", unsafe_allow_html=True)
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 display_metric_with_icon("💰", "CA Total", f"{ca_total:,.2f} MAD", 
-                                      delta=f"Ventes: {ca_ventes:,.0f} + Prestations: {ca_prestations:,.0f}")
+                                      delta=f"Ventes: {ca_ventes:,.0f} + Prestat.: {ca_prestations:,.0f}")
             with col2:
                 display_metric_with_icon("📦", "Coût Achats", f"{cout_achats_ventes:,.2f} MAD")
             with col3:
-                display_metric_with_icon("💸", "Dépenses", f"{total_depenses:,.2f} MAD")
+                display_metric_with_icon("💸", "Charges", f"{total_depenses:,.2f} MAD")
             with col4:
-                display_metric_with_icon("✅", "Bénéfice Net", f"{benefice:,.2f} MAD", 
+                display_metric_with_icon("📈", "Bénéfice Net", f"{benefice:,.2f} MAD", 
                                        delta_color="inverse" if benefice < 0 else "normal")
 
-            st.markdown("<div class='section-header'>💵 Analyse Détaillée de la Trésorerie</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-header'>📊 Flux de Trésorerie</div>", unsafe_allow_html=True)
             
-            col1, col2, col3, col4 = st.columns(4)
+            col_tr1, col_tr2 = st.columns([1, 2])
+            with col_tr1:
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='subsection-header'>💵 Disponibilités</div>", unsafe_allow_html=True)
+                st.metric("Argent Disponible", f"{tresorerie_disponible:,.2f} MAD",
+                         delta_color="inverse" if tresorerie_disponible < 0 else "normal")
+                st.write("---")
+                st.metric("Taux d'utilisation CA", f"{( (cout_achats_ventes + depenses_argent_disponible) / ca_total * 100 if ca_total > 0 else 0):.1f}%")
+                st.markdown("</div>", unsafe_allow_html=True)
             
-            with col1:
-                display_metric_with_icon("💰", "CA Total", f"{ca_total:,.2f} MAD")
-            
-            with col2:
-                display_metric_with_icon("🛒", "Achats (Ventes)", f"{cout_achats_ventes:,.2f} MAD")
-            
-            with col3:
-                display_metric_with_icon("💸", "Dépenses Argent Ventes", f"{depenses_argent_disponible:,.2f} MAD")
-            
-            with col4:
-                display_metric_with_icon("💵", "Argent Disponible", f"{tresorerie_disponible:,.2f} MAD",
-                                       delta_color="inverse" if tresorerie_disponible < 0 else "normal")
-
-            try:
-                categories = ['CA Total', 'Achats', 'Dépenses Argent', 'Argent Disponible']
-                valeurs = [ca_total, -cout_achats_ventes, -depenses_argent_disponible, tresorerie_disponible]
-                mesures = ['absolute', 'relative', 'relative', 'total']
-                
-                fig_cascade = go.Figure(go.Waterfall(
-                    name="Trésorerie",
-                    orientation="v",
-                    measure=mesures,
-                    x=categories,
-                    textposition="outside",
-                    text=[f"{v:+,.0f}" for v in valeurs],
-                    y=valeurs,
-                    connector={"line": {"color": "rgb(63, 63, 63)"}},
-                ))
-                
-                fig_cascade.update_layout(
-                    title="Flux de Trésorerie - Argent des Ventes",
-                    showlegend=False,
-                    height=400
-                )
-                
-                st.plotly_chart(fig_cascade, use_container_width=True)
-                
-            except Exception as e:
-                st.error(f"Erreur graphique flux: {e}")
+            with col_tr2:
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                try:
+                    categories = ['CA Total', 'Achats', 'Dépenses', 'Disponible']
+                    valeurs = [ca_total, -cout_achats_ventes, -depenses_argent_disponible, tresorerie_disponible]
+                    mesures = ['absolute', 'relative', 'relative', 'total']
+                    
+                    fig_cascade = go.Figure(go.Waterfall(
+                        name="Trésorerie",
+                        orientation="v",
+                        measure=mesures,
+                        x=categories,
+                        textposition="outside",
+                        text=[f"{v:+,.0f}" for v in valeurs],
+                        y=valeurs,
+                        connector={"line": {"color": "#e2e8f0"}},
+                        increasing={"marker": {"color": "#10b981"}},
+                        decreasing={"marker": {"color": "#ef4444"}},
+                        totals={"marker": {"color": "#6366f1"}}
+                    ))
+                    
+                    fig_cascade.update_layout(title="Répartition des Flux de Trésorerie", height=380)
+                    st.plotly_chart(apply_custom_chart_style(fig_cascade), use_container_width=True)
+                except Exception as e:
+                    st.error(f"Erreur graphique flux: {e}")
+                st.markdown("</div>", unsafe_allow_html=True)
 
             st.markdown("<div class='section-header'>💳 Trésorerie & Liquidités</div>", unsafe_allow_html=True)
             
@@ -5286,12 +5325,12 @@ def main() -> None:
                     fig_ca = px.pie(
                         values=[ca_ventes, ca_prestations],
                         names=['Ventes', 'Prestations'],
-                        color=['Ventes', 'Prestations'],
-                        color_discrete_map={'Ventes':'#3498db', 'Prestations':'#2ecc71'}
+                        color_discrete_sequence=['#6366f1', '#10b981'],
+                        hole=0.6
                     )
-                    fig_ca.update_traces(textposition='inside', textinfo='percent+label')
-                    fig_ca.update_layout(height=300, margin=dict(l=20, r=20, t=30, b=20))
-                    st.plotly_chart(fig_ca, use_container_width=True)
+                    fig_ca.update_traces(textposition='outside', textinfo='percent+label')
+                    fig_ca.update_layout(height=350)
+                    st.plotly_chart(apply_custom_chart_style(fig_ca), use_container_width=True)
                 else:
                     st.info("Aucune donnée de CA disponible")
                 
@@ -5353,24 +5392,8 @@ def main() -> None:
                                     marker=dict(size=6, color='#2980b9')
                                 )
                                 
-                                fig_ventes.update_layout(
-                                    height=300,
-                                    margin=dict(l=20, r=20, t=40, b=20),
-                                    plot_bgcolor='rgba(0,0,0,0)',
-                                    xaxis=dict(
-                                        showgrid=True,
-                                        gridcolor='rgba(128,128,128,0.2)',
-                                        tickformat=xaxis_format,
-                                        tickangle=45
-                                    ),
-                                    yaxis=dict(
-                                        showgrid=True,
-                                        gridcolor='rgba(128,128,128,0.2)',
-                                        tickformat=',.0f'
-                                    )
-                                )
-                                
-                                st.plotly_chart(fig_ventes, use_container_width=True)
+                                fig_ventes.update_layout(height=400)
+                                st.plotly_chart(apply_custom_chart_style(fig_ventes), use_container_width=True)
                                 
                                 if len(ventes_agg) > 1:
                                     moyenne = ventes_agg['total_mad'].mean()
@@ -5429,23 +5452,23 @@ def main() -> None:
                         color_continuous_scale='Blues',
                         labels={'Chiffre d\'Affaires': 'CA (MAD)'}
                     )
-                    fig_ville_bar.update_layout(height=400, margin=dict(l=20, r=20, t=30, b=20), xaxis_title="CA (MAD)", yaxis_title="")
-                    st.plotly_chart(fig_ville_bar, use_container_width=True)
+                    fig_ville_bar.update_layout(height=450, xaxis_title="CA (MAD)", yaxis_title="")
+                    st.plotly_chart(apply_custom_chart_style(fig_ville_bar), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col2:
                     st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                    st.markdown("<div class='subsection-header'>📈 Répartition du Volume de Ventes</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='subsection-header'>📈 Répartition par Volume</div>", unsafe_allow_html=True)
                     fig_ville_pie = px.pie(
                         ville_stats,
                         values='Nombre de Ventes',
                         names='Ville',
-                        hole=0.4,
-                        color_discrete_sequence=px.colors.qualitative.Pastel
+                        hole=0.6,
+                        color_discrete_sequence=px.colors.qualitative.Safe
                     )
                     fig_ville_pie.update_traces(textinfo='percent+label')
-                    fig_ville_pie.update_layout(height=400, margin=dict(l=20, r=20, t=30, b=20))
-                    st.plotly_chart(fig_ville_pie, use_container_width=True)
+                    fig_ville_pie.update_layout(height=450)
+                    st.plotly_chart(apply_custom_chart_style(fig_ville_pie), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 
                 # Métriques par ville
