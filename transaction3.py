@@ -3139,7 +3139,7 @@ def main() -> None:
                                     new_client = st.text_input("👤 Client", value=vente_data['client'])
                                 with col2:
                                     new_telephone = st.text_input("📞 Téléphone", value=vente_data['telephone_client'] or "")
-                                    new_ville = st.text_input("🏙️ Ville", value=vente_data.get('ville') or "", key=f"edit_ville_{vente_id}")
+                                    new_ville = st.text_input("🏙️ Ville", value=vente_data.get('ville') or "", key=f"edit_ville_{selected_vente_id}")
                                 
                                 if st.form_submit_button("💾 Mettre à jour l'en-tête"):
                                     modifier_vente_header(conn, selected_vente_id, new_date.isoformat(), new_client, new_telephone, new_ville)
