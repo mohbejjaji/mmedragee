@@ -3220,10 +3220,14 @@ def main() -> None:
                                                                     key=f"dev_{article['id']}")
                                         with col3:
                                             st.write("")
-                                            if st.form_submit_button("✏️ Mettre à jour l'article"):
+                                            if st.form_submit_button("✏️ Mettre à jour l'article", use_container_width=True):
                                                 new_prix_mad = convertir_en_mad(new_prix, new_devise, conn)
                                                 modifier_vente_item(conn, article['id'], new_produit, new_quantite, new_prix, new_devise, new_prix_mad)
                                                 display_success_message("Article mis à jour")
+                                                st.rerun()
+                                            if st.form_submit_button("❌ Supprimer", use_container_width=True):
+                                                supprimer_vente_item(conn, article['id'])
+                                                display_success_message("Article supprimé avec succès!")
                                                 st.rerun()
                             
                             st.markdown("### 🔗 Attribution des Articles aux Achats")
@@ -4289,10 +4293,14 @@ def main() -> None:
                                                                     key=f"achat_dev_{article['id']}")
                                         with col3:
                                             st.write("")
-                                            if st.form_submit_button("✏️ Mettre à jour l'article"):
+                                            if st.form_submit_button("✏️ Mettre à jour l'article", use_container_width=True):
                                                 new_prix_mad = convertir_en_mad(new_prix, new_devise, conn)
                                                 modifier_achat_item(conn, article['id'], new_produit, new_quantite, new_prix, new_devise, new_prix_mad)
                                                 display_success_message("Article mis à jour")
+                                                st.rerun()
+                                            if st.form_submit_button("❌ Supprimer", use_container_width=True):
+                                                supprimer_achat_item(conn, article['id'])
+                                                display_success_message("Article supprimé avec succès!")
                                                 st.rerun()
                             
                             st.markdown("#### ➕ Ajouter un nouvel article")
