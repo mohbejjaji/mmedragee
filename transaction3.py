@@ -2121,12 +2121,12 @@ def insert_depense(conn: sqlite3.Connection, date_op: str, categorie: str,
 
 def insert_prestation(conn: sqlite3.Connection, date_op: str, client: str, telephone_client: str, 
                      type_prestation: str, description: str, montant_mad: float, devise: str, 
-                     montant_origine: float, avance_mad: float) -> None:
+                     montant_origine: float, avance_mad: float) -> int:
     reste_a_payer = montant_mad - avance_mad
     statut = 'Payé' if reste_a_payer <= 0 else 'Devis'
     
     with conn:
-        conn.execute(
+        cursor = conn.execute(
             """INSERT INTO prestations (date, client, telephone_client, type_prestation, description, 
                montant_mad, devise_origine, montant_origine, avance_mad, reste_a_payer_mad, statut) 
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -2134,6 +2134,7 @@ def insert_prestation(conn: sqlite3.Connection, date_op: str, client: str, telep
              float(montant_mad), devise, float(montant_origine),
              float(avance_mad), float(reste_a_payer), statut),
         )
+        return cursor.lastrowid
 
 def insert_paiement_prestation(conn: sqlite3.Connection, prestation_id: int, date_paiement: str,
                               montant_mad: float, devise: str, montant_origine: float,
@@ -4914,12 +4915,11 @@ def main() -> None:
                             montant_mad = convertir_en_mad(montant_origine, devise, conn)
                             avance_mad = convertir_en_mad(avance_origine, devise, conn)
                             
-                            insert_prestation(conn, date_op.isoformat(), client.strip(), telephone_client.strip(), 
+                            prestation_id = insert_prestation(conn, date_op.isoformat(), client.strip(), telephone_client.strip(), 
                                             type_prestation, description.strip(), montant_mad, devise, 
                                             montant_origine, avance_mad)
                             
                             if avance_origine > 0:
-                                prestation_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
                                 insert_paiement_prestation(conn, prestation_id, date_op.isoformat(),
                                                          avance_mad, devise, avance_origine,
                                                          f"Avance initiale - {client}")
