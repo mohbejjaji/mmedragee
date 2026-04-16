@@ -992,6 +992,24 @@ def afficher_panier_vente_avec_sources_multiples(conn, vente_header_id):
                 total_marge = items_display['Marge Totale MAD'].sum()
                 marge_moyenne = items_display['Marge %'].mean()
                 
+                # --- Interface de suppression d'article ---
+                st.markdown("---")
+                st.markdown("### 🗑️ Gérer les articles")
+                col_del1, col_del2 = st.columns([3, 1])
+                with col_del1:
+                    options_suppr = {row['id']: f"{row['produit']} ({row['quantite']} unités) - {float(row['prix_mad']):.2f} MAD" for _, row in items_vente.iterrows()}
+                    item_to_delete = st.selectbox("Sélectionner un article à supprimer", options=list(options_suppr.keys()), format_func=lambda x: options_suppr.get(x, ""), key=f"sel_del_multi_{vente_header_id}")
+                with col_del2:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("❌ Supprimer l'article", key=f"btn_del_multi_{vente_header_id}", use_container_width=True):
+                        if item_to_delete:
+                            try:
+                                supprimer_vente_item(conn, item_to_delete)
+                                display_success_message("Article supprimé avec succès!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erreur lors de la suppression: {e}")
+
                 st.markdown("---")
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
@@ -1914,6 +1932,23 @@ def afficher_panier_actuel(conn, vente_header_id):
         }
     )
     
+    # --- Interface de suppression d'article ---
+    st.markdown("### 🗑️ Gérer les articles")
+    col_del1, col_del2 = st.columns([3, 1])
+    with col_del1:
+        options_suppr = {row['id']: f"{row['produit_achat']} ({row['quantite']} unités) - {float(row['prix_mad']):.2f} MAD" for _, row in articles_vente.iterrows()}
+        item_to_delete = st.selectbox("Sélectionner un article à supprimer", options=list(options_suppr.keys()), format_func=lambda x: options_suppr.get(x, ""), key=f"sel_del_{vente_header_id}")
+    with col_del2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("❌ Supprimer l'article", key=f"btn_del_{vente_header_id}", use_container_width=True):
+            if item_to_delete:
+                try:
+                    supprimer_vente_item(conn, item_to_delete)
+                    st.success("Article supprimé avec succès!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erreur lors de la suppression: {e}")
+                    
     # --- Totaux globaux ---
     total_vente = panier_display['Total Vente MAD'].sum()
     total_achat = panier_display['Total Achat MAD'].sum()
@@ -3732,6 +3767,23 @@ def main() -> None:
                                 hide_index=True
                             )
                             
+                            # --- Interface de suppression d'article ---
+                            st.markdown("### 🗑️ Gérer les articles")
+                            col_del1, col_del2 = st.columns([3, 1])
+                            with col_del1:
+                                options_suppr = {row['id']: f"{row['produit']} ({row['quantite']} unités) - {float(row['prix_mad']):.2f} MAD" for _, row in items_achat.iterrows()}
+                                item_to_delete = st.selectbox("Sélectionner un article à supprimer", options=list(options_suppr.keys()), format_func=lambda x: options_suppr.get(x, ""), key=f"sel_del_achat_{st.session_state.current_achat_id}")
+                            with col_del2:
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                if st.button("❌ Supprimer l'article", key=f"btn_del_achat_{st.session_state.current_achat_id}", use_container_width=True):
+                                    if item_to_delete:
+                                        try:
+                                            supprimer_achat_item(conn, item_to_delete)
+                                            st.success("Article supprimé avec succès!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erreur lors de la suppression: {e}")
+
                             total_achat = items_display['Total MAD'].sum()
                             col1, col2 = st.columns([3, 1])
                             with col1:
