@@ -9,11 +9,25 @@ class CursorWrapper:
         self.lastrowid = None
         
     def execute(self, sql, params=()):
-        if isinstance(params, (list, tuple)) and '?' in sql:
-            # Simple replace '?' to '%s' 
-            # Note: handle cases where '?' might be in quotes if it occurs, but typical queries don't have this.
-            sql = sql.replace('?', '%s')
-        
+        if isinstance(params, (list, tuple)):
+            if '?' in sql:
+                # Simple replace '?' to '%s' 
+                # Note: handle cases where '?' might be in quotes if it occurs, but typical queries don't have this.
+                sql = sql.replace('?', '%s')
+            
+            import numpy as np
+            new_params = []
+            for p in params:
+                if isinstance(p, np.integer):
+                    new_params.append(int(p))
+                elif isinstance(p, np.floating):
+                    new_params.append(float(p))
+                elif isinstance(p, np.bool_):
+                    new_params.append(bool(p))
+                else:
+                    new_params.append(p)
+            params = tuple(new_params)
+            
         self.cursor.execute(sql, params)
         
         if sql.lstrip().upper().startswith("INSERT"):
