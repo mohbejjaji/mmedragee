@@ -6189,7 +6189,7 @@ def main() -> None:
                             with st.form(f"modify_hebdo_{selected_h_id}"):
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                    new_date = st.date_input("📅 Date", value=datetime.strptime(h_data['date_debut'], '%Y-%m-%d').date())
+                                    new_date = st.date_input("📅 Date", value=pd.to_datetime(h_data['date_debut']).date())
                                     new_fond = st.number_input("💰 Fond", value=float(h_data['fond_de_caisse']))
                                 with col2:
                                     new_sal1 = st.number_input("💵 Salaire 1", value=float(h_data['salaire_1']))
