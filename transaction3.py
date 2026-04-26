@@ -4501,12 +4501,14 @@ def main() -> None:
             
             cout_achats_ventes = achats_headers[achats_headers["type"] == "achat"]['total_mad'].sum() if not achats_headers.empty else 0.0
             
-            if not depenses_existantes.empty and 'source_fonds' in depenses_existantes.columns:
-                depenses_argent_disponible = depenses_existantes[depenses_existantes["source_fonds"] == "argent_disponible"]['montant_mad'].sum()
-            else:
-                depenses_argent_disponible = 0.0
+            # Déduire également les salaires hebdomadaires
+            try:
+                hebdo_data = pd.read_sql("SELECT SUM(salaire_1) as s1, SUM(salaire_2) as s2 FROM hebdo", conn)
+                total_salaires = float(hebdo_data['s1'].fillna(0).iloc[0]) + float(hebdo_data['s2'].fillna(0).iloc[0])
+            except:
+                total_salaires = 0.0
             
-            argent_disponible = ca_total - cout_achats_ventes - depenses_argent_disponible
+            argent_disponible = ca_total - cout_achats_ventes - depenses_argent_disponible - total_salaires
         except Exception as e:
             st.error(f"Erreur calcul trésorerie: {e}")
             argent_disponible = 0.0
