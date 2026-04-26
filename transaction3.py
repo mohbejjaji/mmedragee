@@ -1332,6 +1332,32 @@ def update_database_structure_v2(conn):
 def update_database_structure_v3(conn):
     pass
 
+def update_database_structure_v4(conn):
+    try:
+        # PostgreSQL check for table existence
+        check_table_sql = """
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_name='hebdo';
+        """
+        res = pd.read_sql(check_table_sql, conn)
+        
+        if res.empty:
+            conn.execute("""
+                CREATE TABLE hebdo (
+                    id SERIAL PRIMARY KEY,
+                    date_debut DATE,
+                    fond_de_caisse FLOAT DEFAULT 0,
+                    salaire_1 FLOAT DEFAULT 0,
+                    salaire_2 FLOAT DEFAULT 0,
+                    notes TEXT
+                );
+            """)
+            if hasattr(conn, 'commit'):
+                conn.commit()
+    except Exception as e:
+        pass
+
 def lier_depense_achat(conn: sqlite3.Connection, depense_id: int, achat_header_id: int) -> None:
     """Lie une dépense à un achat spécifique"""
     with conn:
@@ -2504,6 +2530,7 @@ def main() -> None:
     update_database_structure(conn)
     update_database_structure_v2(conn)
     update_database_structure_v3(conn)
+    update_database_structure_v4(conn)
 
     # Sidebar avec style amélioré
     with st.sidebar:
@@ -2513,7 +2540,7 @@ def main() -> None:
         
         menu = st.radio(
             "Navigation", 
-            ["📦 Ventes", "🛒 Achats", "💰 Dépenses", "🎯 Prestations", "📊 Tableau de Bord", "🔧 Devises", "👥 Clients & Fournisseurs"],
+            ["📦 Ventes", "🛒 Achats", "💰 Dépenses", "🎯 Prestations", "📊 Tableau de Bord", "📅 Hebdo", "🔧 Devises", "👥 Clients & Fournisseurs"],
             label_visibility="collapsed"
         )
         
@@ -2610,6 +2637,19 @@ def main() -> None:
                         )
                         
                         if not ventes_headers.empty:
+                            st.markdown("<div class='subsection-header'>🔍 Filtres de recherche</div>", unsafe_allow_html=True)
+                            col_f1, col_f2 = st.columns(2)
+                            with col_f1:
+                                filter_name = st.text_input("👤 Filtrer par nom", placeholder="Nom du client...", key="filter_name_sales")
+                            with col_f2:
+                                filter_city = st.text_input("🏙️ Filtrer par ville", placeholder="Ville...", key="filter_city_sales")
+                            
+                            if filter_name:
+                                ventes_headers = ventes_headers[ventes_headers['client'].str.contains(filter_name, case=False, na=False)]
+                            if filter_city:
+                                if 'ville' in ventes_headers.columns:
+                                    ventes_headers = ventes_headers[ventes_headers['ville'].str.contains(filter_city, case=False, na=False)]
+
                             col1, col2, col3 = st.columns(3)
                             with col1:
                                 total_ventes = ventes_headers['total_mad'].sum()
@@ -6049,6 +6089,134 @@ def main() -> None:
                         
                 except Exception as e:
                     st.error(f"❌ Erreur lors du chargement des données fournisseurs: {e}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    elif menu == "📅 Hebdo":
+        display_view_header("Suivi Hebdomadaire", "Suivez le fond de caisse et les salaires", "📅")
+        
+        tab_h1, tab_h2, tab_h3 = st.tabs(["➕ Nouveau Suivi", "🗂️ Historique", "✏️ Modifier"])
+        
+        with tab_h1:
+            with st.container():
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='section-header'>Enregistrer un nouveau suivi</div>", unsafe_allow_html=True)
+                
+                with st.form("form_hebdo", clear_on_submit=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        today = date.today()
+                        monday = today - timedelta(days=today.weekday())
+                        date_debut = st.date_input("📅 Semaine du (Lundi)", value=monday)
+                        fond = st.number_input("💰 Fond de caisse", min_value=0.0, value=0.0, step=10.0)
+                    with col2:
+                        sal1 = st.number_input("💵 Salaire 1", min_value=0.0, value=0.0, step=10.0)
+                        sal2 = st.number_input("💵 Salaire 2", min_value=0.0, value=0.0, step=10.0)
+                    
+                    notes = st.text_area("📝 Notes", placeholder="Observations éventuelles...")
+                    
+                    if st.form_submit_button("✅ Enregistrer le suivi", use_container_width=True):
+                        try:
+                            with conn:
+                                conn.execute(
+                                    "INSERT INTO hebdo (date_debut, fond_de_caisse, salaire_1, salaire_2, notes) VALUES (?, ?, ?, ?, ?)",
+                                    (date_debut.isoformat(), float(fond), float(sal1), float(sal2), notes)
+                                )
+                            display_success_message("Suivi hebdomadaire enregistré avec succès !")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Erreur lors de l'enregistrement: {e}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        with tab_h2:
+            with st.container():
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='section-header'>Historique Hebdomadaire</div>", unsafe_allow_html=True)
+                
+                try:
+                    hebdo_df = pd.read_sql("SELECT * FROM hebdo ORDER BY date_debut DESC", conn)
+                    if not hebdo_df.empty:
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            total_fond = hebdo_df['fond_de_caisse'].sum()
+                            display_metric_with_icon("💰", "Total Fond de Caisse", f"{total_fond:,.2f} MAD")
+                        with col2:
+                            total_salaires = hebdo_df['salaire_1'].sum() + hebdo_df['salaire_2'].sum()
+                            display_metric_with_icon("💵", "Total Salaires", f"{total_salaires:,.2f} MAD")
+                        with col3:
+                            nb_semaines = len(hebdo_df)
+                            display_metric_with_icon("📅", "Semaines Suivies", f"{nb_semaines}")
+
+                        st.markdown("<div class='subsection-header'>📋 Liste des suivis</div>", unsafe_allow_html=True)
+                        
+                        display_df = hebdo_df.copy()
+                        display_df = display_df[['id', 'date_debut', 'fond_de_caisse', 'salaire_1', 'salaire_2', 'notes']]
+                        display_df.columns = ['ID', 'Date Début', 'Fond de Caisse', 'Salaire 1', 'Salaire 2', 'Notes']
+                        
+                        st.dataframe(
+                            display_df,
+                            use_container_width=True,
+                            hide_index=True,
+                            column_config={
+                                "ID": st.column_config.NumberColumn("ID", format="%d"),
+                                "Date Début": "Semaine du",
+                                "Fond de Caisse": st.column_config.NumberColumn("Fond", format="%.2f MAD"),
+                                "Salaire 1": st.column_config.NumberColumn("S1", format="%.2f MAD"),
+                                "Salaire 2": st.column_config.NumberColumn("S2", format="%.2f MAD")
+                            }
+                        )
+                    else:
+                        st.info("📊 Aucun suivi enregistré pour le moment")
+                except Exception as e:
+                    st.error(f"❌ Erreur lors du chargement: {e}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        with tab_h3:
+            with st.container():
+                st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                st.markdown("<div class='section-header'>Modifier ou Supprimer</div>", unsafe_allow_html=True)
+                
+                try:
+                    hebdo_list = pd.read_sql("SELECT * FROM hebdo ORDER BY date_debut DESC", conn)
+                    if not hebdo_list.empty:
+                        selected_h_id = st.selectbox(
+                            "Sélectionner une semaine",
+                            hebdo_list['id'].tolist(),
+                            format_func=lambda x: f"Semaine du {hebdo_list[hebdo_list['id'] == x].iloc[0]['date_debut']}"
+                        )
+                        
+                        if selected_h_id:
+                            h_data = hebdo_list[hebdo_list['id'] == selected_h_id].iloc[0]
+                            with st.form(f"modify_hebdo_{selected_h_id}"):
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    new_date = st.date_input("📅 Date", value=datetime.strptime(h_data['date_debut'], '%Y-%m-%d').date())
+                                    new_fond = st.number_input("💰 Fond", value=float(h_data['fond_de_caisse']))
+                                with col2:
+                                    new_sal1 = st.number_input("💵 Salaire 1", value=float(h_data['salaire_1']))
+                                    new_sal2 = st.number_input("💵 Salaire 2", value=float(h_data['salaire_2']))
+                                
+                                new_notes = st.text_area("📝 Notes", value=h_data['notes'] or "")
+                                
+                                col_b1, col_b2 = st.columns(2)
+                                with col_b1:
+                                    if st.form_submit_button("💾 Mettre à jour"):
+                                        with conn:
+                                            conn.execute(
+                                                "UPDATE hebdo SET date_debut = ?, fond_de_caisse = ?, salaire_1 = ?, salaire_2 = ?, notes = ? WHERE id = ?",
+                                                (new_date.isoformat(), new_fond, new_sal1, new_sal2, new_notes, selected_h_id)
+                                            )
+                                        display_success_message("Suivi mis à jour !")
+                                        st.rerun()
+                                with col_b2:
+                                    if st.form_submit_button("🗑️ Supprimer"):
+                                        with conn:
+                                            conn.execute("DELETE FROM hebdo WHERE id = ?", (selected_h_id,))
+                                        display_success_message("Suivi supprimé !")
+                                        st.rerun()
+                    else:
+                        st.info("📊 Aucun suivi à modifier")
+                except Exception as e:
+                    st.error(f"❌ Erreur lors de la modification: {e}")
                 st.markdown("</div>", unsafe_allow_html=True)
 
     conn.close()

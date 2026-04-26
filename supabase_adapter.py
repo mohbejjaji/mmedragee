@@ -58,8 +58,18 @@ class SupabaseAdapter:
         self.dsn = st.secrets.get("DB_URL")
         
         if not self.dsn:
-            st.error("❌ Erreur de configuration : Le secret `DB_URL` est manquant.")
-            st.info("💡 Solution : Ajoutez `DB_URL` dans les secrets de votre application Streamlit Cloud.")
+            st.error("### 🛡️ Sécurité : Configuration Manquante")
+            st.warning("""
+            Le secret `DB_URL` est manquant dans votre configuration. 
+            
+            **Pour corriger cela sur Streamlit Cloud :**
+            1. Allez dans les **Settings** de votre application sur le dashboard Streamlit.
+            2. Ouvrez l'onglet **Secrets**.
+            3. Ajoutez la ligne suivante (avec vos vrais identifiants) :
+               `DB_URL = "votre_url_de_base_de_donnees"`
+            4. Enregistrez.
+            """)
+            st.info("💡 **Note de sécurité** : Ne remettez pas vos mots de passe dans le fichier `secrets.toml` sur GitHub.")
             st.stop()
             
         try:
