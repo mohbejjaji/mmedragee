@@ -5313,8 +5313,15 @@ def main() -> None:
             depenses_argent_disponible = depenses_detail[depenses_detail['source_fonds'] == 'argent_disponible']['total_mad'].sum() if not depenses_detail.empty else 0
             depenses_autre_source = depenses_detail[depenses_detail['source_fonds'] == 'autre_source']['total_mad'].sum() if not depenses_detail.empty else 0
             
-            tresorerie_disponible = ca_total - cout_achats_ventes - depenses_argent_disponible
-            benefice = ca_total - cout_achats_ventes - total_depenses - cout_stock_initial
+            # Déduire également les salaires hebdomadaires
+            try:
+                hebdo_data = pd.read_sql("SELECT SUM(salaire_1) as s1, SUM(salaire_2) as s2 FROM hebdo", conn)
+                total_salaires = float(hebdo_data['s1'].fillna(0).iloc[0]) + float(hebdo_data['s2'].fillna(0).iloc[0])
+            except:
+                total_salaires = 0.0
+
+            tresorerie_disponible = ca_total - cout_achats_ventes - depenses_argent_disponible - total_salaires
+            benefice = ca_total - cout_achats_ventes - total_depenses - cout_stock_initial - total_salaires
 
             st.markdown("<div class='section-header'>💹 Synthèse de Performance</div>", unsafe_allow_html=True)
             
