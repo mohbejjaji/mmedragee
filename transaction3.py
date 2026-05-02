@@ -4496,7 +4496,10 @@ def main() -> None:
             depenses_existantes = pd.read_sql("SELECT * FROM depenses", conn)
             
             ca_ventes = ventes_headers['total_mad'].sum() if not ventes_headers.empty else 0.0
-            ca_prestations = prestations['montant_mad'].sum() if not prestations.empty else 0.0
+            if not prestations.empty:
+                ca_prestations = prestations.apply(lambda x: x['avance_mad'] if x['statut'] == 'En cours' else x['montant_mad'], axis=1).sum()
+            else:
+                ca_prestations = 0.0
             ca_total = ca_ventes + ca_prestations
             
             cout_achats_ventes = achats_headers[achats_headers["type"] == "achat"]['total_mad'].sum() if not achats_headers.empty else 0.0
@@ -4811,7 +4814,10 @@ def main() -> None:
                                     autres_depenses = depenses[depenses['id'] != selected_depense_id]
                                     
                                     ca_ventes = ventes_headers['total_mad'].sum() if not ventes_headers.empty else 0.0
-                                    ca_prestations = prestations['montant_mad'].sum() if not prestations.empty else 0.0
+                                    if not prestations.empty:
+                                        ca_prestations = prestations.apply(lambda x: x['avance_mad'] if x['statut'] == 'En cours' else x['montant_mad'], axis=1).sum()
+                                    else:
+                                        ca_prestations = 0.0
                                     ca_total = ca_ventes + ca_prestations
                                     
                                     cout_achats_ventes = achats_headers[achats_headers["type"] == "achat"]['total_mad'].sum() if not achats_headers.empty else 0.0
@@ -5294,7 +5300,10 @@ def main() -> None:
             stock_actuel = get_stock_actuel(conn)
 
             ca_ventes = ventes_headers['total_mad'].sum() if not ventes_headers.empty else 0.0
-            ca_prestations = prestations['montant_mad'].sum() if not prestations.empty else 0.0
+            if not prestations.empty:
+                ca_prestations = prestations.apply(lambda x: x['avance_mad'] if x['statut'] == 'En cours' else x['montant_mad'], axis=1).sum()
+            else:
+                ca_prestations = 0.0
             ca_total = ca_ventes + ca_prestations
             
             cout_achats_ventes = achats_headers[achats_headers["type"] == "achat"]['total_mad'].sum() if not achats_headers.empty else 0.0
