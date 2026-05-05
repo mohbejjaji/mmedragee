@@ -6182,6 +6182,43 @@ def main() -> None:
                                 "Salaire 2": st.column_config.NumberColumn("S2", format="%.2f MAD")
                             }
                         )
+
+                        # --- AJOUT DES GRAPHIQUES ---
+                        st.markdown("<div class='subsection-header'>📈 Analyses Graphiques</div>", unsafe_allow_html=True)
+                        
+                        # Préparation des données
+                        df_graphs = hebdo_df.copy()
+                        df_graphs['date_debut'] = pd.to_datetime(df_graphs['date_debut'])
+                        df_graphs = df_graphs.sort_values('date_debut')
+                        df_graphs['Total Salaires'] = df_graphs['salaire_1'] + df_graphs['salaire_2']
+                        
+                        # Cumuls
+                        df_graphs['Cumul Fond'] = df_graphs['fond_de_caisse'].cumsum()
+                        df_graphs['Cumul Salaires'] = df_graphs['Total Salaires'].cumsum()
+                        
+                        col_g1, col_g2 = st.columns(2)
+                        
+                        with col_g1:
+                            st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                            fig_evol = go.Figure()
+                            fig_evol.add_trace(go.Scatter(x=df_graphs['date_debut'], y=df_graphs['fond_de_caisse'], 
+                                                       name="Fond de Caisse", line=dict(color='#6366f1', width=3), mode='lines+markers'))
+                            fig_evol.add_trace(go.Scatter(x=df_graphs['date_debut'], y=df_graphs['Total Salaires'], 
+                                                       name="Total Salaires", line=dict(color='#ef4444', width=3, dash='dot'), mode='lines+markers'))
+                            fig_evol.update_layout(title="Évolution Hebdomadaire", xaxis_title="Date", yaxis_title="Montant (MAD)", height=400)
+                            st.plotly_chart(fig_evol, use_container_width=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                            
+                        with col_g2:
+                            st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+                            fig_cumul = go.Figure()
+                            fig_cumul.add_trace(go.Scatter(x=df_graphs['date_debut'], y=df_graphs['Cumul Fond'], 
+                                                        name="Cumul Fond", fill='tozeroy', line=dict(color='#10b981')))
+                            fig_cumul.add_trace(go.Scatter(x=df_graphs['date_debut'], y=df_graphs['Cumul Salaires'], 
+                                                        name="Cumul Salaires", fill='tonexty', line=dict(color='#f59e0b')))
+                            fig_cumul.update_layout(title="Évolution Cumulée", xaxis_title="Date", yaxis_title="Cumul (MAD)", height=400)
+                            st.plotly_chart(fig_cumul, use_container_width=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.info("📊 Aucun suivi enregistré pour le moment")
                 except Exception as e:
