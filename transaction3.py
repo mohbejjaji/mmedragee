@@ -6192,7 +6192,11 @@ def main() -> None:
                         )
 
                         # --- AJOUT DES GRAPHIQUES ---
-                        st.markdown("<div class='subsection-header'>📈 Analyses Graphiques</div>", unsafe_allow_html=True)
+                        col_hdr1, col_hdr2 = st.columns([3, 1])
+                        with col_hdr1:
+                            st.markdown("<div class='subsection-header'>📈 Analyses Graphiques</div>", unsafe_allow_html=True)
+                        with col_hdr2:
+                            periode_graph = st.selectbox("Vue temporelle", ["Hebdomadaire", "Mensuelle"], label_visibility="collapsed")
                         
                         # Préparation des données
                         df_graphs = hebdo_df.copy()
@@ -6200,6 +6204,19 @@ def main() -> None:
                         df_graphs = df_graphs.sort_values('date_debut')
                         df_graphs['Total Salaires'] = df_graphs['salaire_1'] + df_graphs['salaire_2']
                         
+                        if periode_graph == "Mensuelle":
+                            # Grouper par mois
+                            df_graphs['Mois'] = df_graphs['date_debut'].dt.to_period('M')
+                            df_graphs = df_graphs.groupby('Mois').agg({
+                                'fond_de_caisse': 'sum',
+                                'Total Salaires': 'sum'
+                            }).reset_index()
+                            # Reconvertir Mois en datetime pour Plotly
+                            df_graphs['date_debut'] = df_graphs['Mois'].dt.to_timestamp()
+                            titre_evol = "Évolution Mensuelle"
+                        else:
+                            titre_evol = "Évolution Hebdomadaire"
+                            
                         # Cumuls
                         df_graphs['Cumul Fond'] = df_graphs['fond_de_caisse'].cumsum()
                         df_graphs['Cumul Salaires'] = df_graphs['Total Salaires'].cumsum()
@@ -6213,7 +6230,7 @@ def main() -> None:
                                                        name="Fond de Caisse", line=dict(color='#6366f1', width=3), mode='lines+markers'))
                             fig_evol.add_trace(go.Scatter(x=df_graphs['date_debut'], y=df_graphs['Total Salaires'], 
                                                        name="Total Salaires", line=dict(color='#ef4444', width=3, dash='dot'), mode='lines+markers'))
-                            fig_evol.update_layout(title="Évolution Hebdomadaire", xaxis_title="Date", yaxis_title="Montant (MAD)", height=400)
+                            fig_evol.update_layout(title=titre_evol, xaxis_title="Date", yaxis_title="Montant (MAD)", height=400)
                             st.plotly_chart(fig_evol, use_container_width=True)
                             st.markdown("</div>", unsafe_allow_html=True)
                             
