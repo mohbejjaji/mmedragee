@@ -3239,30 +3239,56 @@ def main() -> None:
                                 
                             df_compare = df_compare.sort_values('semaine')
                             
-                            fig = go.Figure()
-                            fig.add_trace(go.Bar(
-                                x=df_compare['semaine'],
-                                y=df_compare['ventes_total'],
-                                name='Ventes',
-                                marker_color='#2ecc71'
-                            ))
-                            fig.add_trace(go.Bar(
-                                x=df_compare['semaine'],
-                                y=df_compare['achats_total'],
-                                name='Achats',
-                                marker_color='#e74c3c'
-                            ))
+                            # Format for table display
+                            df_display = df_compare.copy()
+                            df_display['semaine_str'] = df_display['semaine'].dt.strftime('%d/%m/%Y')
                             
-                            fig.update_layout(
-                                title="Comparatif Hebdomadaire : Ventes vs Achats",
-                                barmode='group',
-                                xaxis_title="Semaine",
-                                yaxis_title="Montant (MAD)",
-                                legend_title="Type"
-                            )
+                            df_display = df_display[['semaine_str', 'ventes_total', 'achats_total']]
+                            df_display.columns = ['Semaine (Lundi)', 'Total Ventes (MAD)', 'Total Achats (MAD)']
                             
-                            fig = apply_custom_chart_style(fig)
-                            st.plotly_chart(fig, use_container_width=True)
+                            col1, col2 = st.columns([2, 1])
+                            with col1:
+                                fig = go.Figure()
+                                fig.add_trace(go.Scatter(
+                                    x=df_compare['semaine'],
+                                    y=df_compare['ventes_total'],
+                                    name='Ventes',
+                                    mode='lines+markers',
+                                    line=dict(color='#2ecc71', width=3),
+                                    marker=dict(size=8)
+                                ))
+                                fig.add_trace(go.Scatter(
+                                    x=df_compare['semaine'],
+                                    y=df_compare['achats_total'],
+                                    name='Achats',
+                                    mode='lines+markers',
+                                    line=dict(color='#e74c3c', width=3),
+                                    marker=dict(size=8)
+                                ))
+                                
+                                fig.update_layout(
+                                    title="Évolution Hebdomadaire : Ventes vs Achats",
+                                    xaxis_title="Semaine",
+                                    yaxis_title="Montant (MAD)",
+                                    legend_title="Type",
+                                    hovermode="x unified"
+                                )
+                                
+                                fig = apply_custom_chart_style(fig)
+                                st.plotly_chart(fig, use_container_width=True)
+                                
+                            with col2:
+                                st.markdown("#### 📋 Données Hebdomadaires")
+                                st.dataframe(
+                                    df_display,
+                                    use_container_width=True,
+                                    hide_index=True,
+                                    column_config={
+                                        "Semaine (Lundi)": "Semaine",
+                                        "Total Ventes (MAD)": st.column_config.NumberColumn("Ventes", format="%.2f MAD"),
+                                        "Total Achats (MAD)": st.column_config.NumberColumn("Achats", format="%.2f MAD")
+                                    }
+                                )
                         else:
                             st.info("Aucune donnée disponible pour le comparatif")
                     except Exception as e:
