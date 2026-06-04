@@ -2623,7 +2623,7 @@ def main() -> None:
                 st.markdown("<div class='section-header'>Historique des Ventes</div>", unsafe_allow_html=True)
                 
                 # Ajouter des sous-onglets pour différentes vues
-                ventes_subtabs = st.tabs(["📋 Liste des Ventes", "🔍 Détail par Vente", "📊 Rapport par Produit", "📈 Analyses Produits"])
+                ventes_subtabs = st.tabs(["📋 Liste des Ventes", "🔍 Détail par Vente", "📊 Rapport par Produit", "📈 Analyses Produits", "📅 Comparatif Hebdo"])
                 
                 with ventes_subtabs[0]:  # Liste des ventes existante
                     try:
@@ -3203,6 +3203,70 @@ def main() -> None:
                         
                     else:
                         st.info("📊 Aucune donnée produit disponible pour l'analyse")
+                
+                with ventes_subtabs[4]:  # Comparatif Hebdo
+                    st.markdown("<div class='subsection-header'>📅 Comparaison Hebdomadaire (Ventes vs Achats)</div>", unsafe_allow_html=True)
+                    
+                    try:
+                        # Fetch ventes
+                        ventes_df = pd.read_sql("SELECT date, total_mad as ventes_total FROM ventes_headers", conn)
+                        # Fetch achats
+                        achats_df = pd.read_sql("SELECT date, total_mad as achats_total FROM achats_headers", conn)
+                        
+                        if not ventes_df.empty or not achats_df.empty:
+                            if not ventes_df.empty:
+                                ventes_df['date'] = pd.to_datetime(ventes_df['date'])
+                                ventes_df['semaine'] = ventes_df['date'].dt.to_period('W-MON').apply(lambda r: r.start_time)
+                                ventes_hebdo = ventes_df.groupby('semaine')['ventes_total'].sum().reset_index()
+                            else:
+                                ventes_hebdo = pd.DataFrame(columns=['semaine', 'ventes_total'])
+                                
+                            if not achats_df.empty:
+                                achats_df['date'] = pd.to_datetime(achats_df['date'])
+                                achats_df['semaine'] = achats_df['date'].dt.to_period('W-MON').apply(lambda r: r.start_time)
+                                achats_hebdo = achats_df.groupby('semaine')['achats_total'].sum().reset_index()
+                            else:
+                                achats_hebdo = pd.DataFrame(columns=['semaine', 'achats_total'])
+                                
+                            if not ventes_hebdo.empty and not achats_hebdo.empty:
+                                df_compare = pd.merge(ventes_hebdo, achats_hebdo, on='semaine', how='outer').fillna(0)
+                            elif not ventes_hebdo.empty:
+                                df_compare = ventes_hebdo.copy()
+                                df_compare['achats_total'] = 0
+                            elif not achats_hebdo.empty:
+                                df_compare = achats_hebdo.copy()
+                                df_compare['ventes_total'] = 0
+                                
+                            df_compare = df_compare.sort_values('semaine')
+                            
+                            fig = go.Figure()
+                            fig.add_trace(go.Bar(
+                                x=df_compare['semaine'],
+                                y=df_compare['ventes_total'],
+                                name='Ventes',
+                                marker_color='#2ecc71'
+                            ))
+                            fig.add_trace(go.Bar(
+                                x=df_compare['semaine'],
+                                y=df_compare['achats_total'],
+                                name='Achats',
+                                marker_color='#e74c3c'
+                            ))
+                            
+                            fig.update_layout(
+                                title="Comparatif Hebdomadaire : Ventes vs Achats",
+                                barmode='group',
+                                xaxis_title="Semaine",
+                                yaxis_title="Montant (MAD)",
+                                legend_title="Type"
+                            )
+                            
+                            fig = apply_custom_chart_style(fig)
+                            st.plotly_chart(fig, use_container_width=True)
+                        else:
+                            st.info("Aucune donnée disponible pour le comparatif")
+                    except Exception as e:
+                        st.error(f"❌ Erreur lors de la génération du graphique: {e}")
                 
                 st.markdown("</div>", unsafe_allow_html=True)
 
